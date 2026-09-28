@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration · Professional Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(145deg, #eef2f7 0%, #d9e1ec 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .registration-card {
+      max-width: 1000px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 20, 40, 0.25),
+                  0 8px 20px -8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1a2b4c;
+      padding: 1.75rem 2.5rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 4px solid #3b82f6;
+    }
+
+    .card-header i { font-size: 2.2rem; color: #93c5fd; }
+    .card-header h1 { font-size: 1.9rem; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+    .card-header span {
+      font-weight: 400; font-size: 0.95rem; opacity: 0.8; margin-left: auto;
+      background: rgba(255, 255, 255, 0.12); padding: 0.4rem 1rem; border-radius: 30px;
+    }
+
+    .form-body { padding: 2.5rem; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem 2rem;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group label i { color: #3b82f6; font-size: 0.95rem; width: 1.2rem; }
+    .required-star { color: #ef4444; margin-left: 0.25rem; font-weight: 700; }
+
+    .form-control {
+      width: 100%;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+      color: #0f172a;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: #3b82f6;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    }
+
+    .form-control::placeholder { color: #94a3b8; font-size: 0.95rem; }
+    .form-control:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    select.form-control {
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%233b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+      background-repeat: no-repeat;
+      background-position: right 1.2rem center;
+      background-size: 1rem;
+      cursor: pointer;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem;
+      padding: 0.4rem 0 0.2rem;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.98rem;
+      color: #1e293b;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"] {
+      appearance: none;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 50%;
+      margin: 0;
+      display: grid;
+      place-content: center;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"]:checked {
+      border-color: #3b82f6;
+      background: #3b82f6;
+      box-shadow: inset 0 0 0 3px white;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      margin-top: 0.1rem;
+      display: grid;
+      place-content: center;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: "✓";
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .checkbox-group label {
+      font-weight: 400;
+      color: #334155;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .checkbox-group label a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px dotted #2563eb;
+    }
+
+    .form-actions {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      border-top: 1.5px solid #e9eef4;
+      padding-top: 2rem;
+    }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 1rem 2.2rem;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+    .btn-primary {
+      background: #1a2b4c;
+      color: white;
+      box-shadow: 0 10px 15px -6px rgba(26, 43, 76, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0f1e36;
+      transform: translateY(-2px);
+      box-shadow: 0 18px 25px -8px rgba(26, 43, 76, 0.4);
+    }
+
+    .btn-primary i { color: #93c5fd; }
+
+    .btn-secondary {
+      background: white;
+      color: #1e293b;
+      border: 1.5px solid #cbd5e1;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    .btn-secondary i { color: #3b82f6; }
+
+    .helper-text {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 400px;
+    }
+
+    .toast.show { transform: translateX(0); }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #3b82f6; }
+
+    @media (max-width: 720px) {
+      .form-body { padding: 1.75rem; }
+      .form-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+      .full-width { grid-column: span 1; }
+      .card-header { padding: 1.4rem 1.75rem; flex-wrap: wrap; }
+      .card-header h1 { font-size: 1.6rem; }
+      .card-header span { margin-left: 0; }
+      .form-actions { flex-direction: column-reverse; align-items: stretch; }
+      .btn { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .registration-card { border-radius: 1.5rem; }
+      .form-body { padding: 1.5rem; }
+      .radio-option { width: 100%; }
+      .toast { right: 1rem; left: 1rem; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="registration-card">
+    <div class="card-header">
+      <i class="fas fa-user-graduate"></i>
+      <h1>Student Registration</h1>
+      <span>Academic Year 2026–27</span>
+    </div>
+    <div class="form-body">
+      <form id="studentRegistrationForm" novalidate>
+        <div class="form-grid">
+          <!-- Full name -->
+          <div class="form-group full-width">
+            <label for="fullName">
+              <i class="fas fa-user"></i> Full name <span class="required-star">*</span>
+            </label>
+            <input type="text" id="fullName" name="fullName" class="form-control"
+                   placeholder="e.g., Olivia Chen" autocomplete="name" required>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email">
+              <i class="fas fa-envelope"></i> Email address <span class="required-star">*</span>
+            </label>
+            <input type="email" id="email" name="email" class="form-control"
+                   placeholder="student@university.edu" autocomplete="email" required>
+            <div class="helper-text"><i class="fas fa-info-circle"></i> We'll send confirmation here</div>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label for="phone">
+              <i class="fas fa-phone-alt"></i> Phone number
+            </label>
+            <input type="tel" id="phone" name="phone" class="form-control"
+                   placeholder="+255 700 000 000" autocomplete="tel">
+          </div>
+
+          <!-- Date of birth -->
+          <div class="form-group">
+            <label for="dob">
+              <i class="fas fa-calendar-alt"></i> Date of birth <span class="required-star">*</span>
+            </label>
+            <input type="date" id="dob" name="dob" class="form-control" required>
+          </div>
+
+          <!-- Gender -->
+          <div class="form-group">
+            <label><i class="fas fa-venus-mars"></i> Gender</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="gender" value="female"> Female</label>
+              <label class="radio-option"><input type="radio" name="gender" value="male"> Male</label>
+              <label class="radio-option"><input type="radio" name="gender" value="other"> Other</label>
+              <label class="radio-option"><input type="radio" name="gender" value="prefer-not"> Prefer not to say</label>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="form-group full-width">
+            <label for="address"><i class="fas fa-map-pin"></i> Permanent address</label>
+            <input type="text" id="address" name="address" class="form-control"
+                   placeholder="Street, city, postal code" autocomplete="street-address">
+          </div>
+
+          <!-- Program -->
+          <div class="form-group">
+            <label for="program">
+              <i class="fas fa-book-open"></i> Program of interest <span class="required-star">*</span>
+            </label>
+            <select id="program" name="program" class="form-control" required>
+              <option value="" disabled selected>— Select a program —</option>
+              <option value="Computer Science">Computer Science (BSc)</option>
+              <option value="Business Administration">Business Administration (BBA)</option>
+              <option value="Engineering">Engineering (BEng)</option>
+              <option value="Medicine">Medicine (MD)</option>
+              <option value="Psychology">Psychology (BA)</option>
+              <option value="Design">Design & Visual Arts (BDes)</option>
+              <option value="Law">Law (LLB)</option>
+            </select>
+          </div>
+
+          <!-- Enrollment -->
+          <div class="form-group">
+            <label for="enrollment"><i class="fas fa-clock"></i> Enrollment type</label>
+            <select id="enrollment" name="enrollment" class="form-control">
+              <option value="full-time">Full-time</option>
+              <option value="part-time">Part-time</option>
+              <option value="online">Online / Hybrid</option>
+            </select>
+          </div>
+
+          <!-- Previous school -->
+          <div class="form-group">
+            <label for="prevSchool"><i class="fas fa-school"></i> Previous institution</label>
+            <input type="text" id="prevSchool" name="prevSchool" class="form-control"
+                   placeholder="High school or college name">
+          </div>
+
+          <!-- Graduation year -->
+          <div class="form-group">
+            <label for="gradYear"><i class="fas fa-calendar-check"></i> Graduation year</label>
+            <input type="number" id="gradYear" name="gradYear" class="form-control"
+                   placeholder="e.g., 2024" min="1950" max="2035" step="1">
+          </div>
+
+          <!-- Terms -->
+          <div class="form-group full-width">
+            <div class="checkbox-group">
+              <input type="checkbox" id="terms" name="terms" required>
+              <label for="terms">
+                I confirm that the information provided is accurate and I agree to the
+                <a href="#" target="_blank">Terms of Service</a> and
+                <a href="#" target="_blank">Privacy Policy</a>. <span class="required-star">*</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Newsletter -->
+          <div class="form-group full-width">
+            <div class="checkbox-group">
+              <input type="checkbox" id="newsletter" name="newsletter" checked>
+              <label for="newsletter">
+                Send me occasional updates about campus events, scholarships, and deadlines.
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="resetBtn">
+            <i class="fas fa-rotate-left"></i> Reset
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="fas fa-pen-fancy"></i> Submit registration
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ SUPABASE JS SDK ============ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // ============================================
+    // 1. CONFIG — Weka URL na KEY zako hapa
+    // ============================================
+    const SUPABASE_URL = 'https://ypayivoloaccybdagpti.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_M1nxV_SvjG9Wp_R2NDZNog_xGoW1C2A';
+
+    // 2. Anzisha Supabase client
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================
+    // 3. Toast notification (badala ya alert)
+    // ============================================
+    function showToast(message, type = 'info', duration = 4000) {
+      // Ondoa toast zilizopo
+      document.querySelectorAll('.toast').forEach(t => t.remove());
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-exclamation',
+        info: 'fa-circle-info'
+      };
+
+      toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.info}"></i>
+        <span>${message}</span>
+      `;
+      document.body.appendChild(toast);
+
+      // Onyesha
+      requestAnimationFrame(() => toast.classList.add('show'));
+
+      // Ficha
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ============================================
+    // 4. Form logic
+    // ============================================
+    const form = document.getElementById('studentRegistrationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const dobInput = document.getElementById('dob');
+
+    // Weka max date kwa DOB = leo
+    if (dobInput) {
+      dobInput.setAttribute('max', new Date().toISOString().split('T')[0]);
+    }
+
+    // ============================================
+    // 5. Submit handler — Tuma kwa Supabase
+    // ============================================
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      // Kusanya data
+      const formData = new FormData(form);
+      const studentData = {
+        full_name:   (formData.get('fullName') || '').trim(),
+        email:       (formData.get('email') || '').trim().toLowerCase(),
+        phone:       (formData.get('phone') || '').trim() || null,
+        dob:         formData.get('dob') || null,
+        gender:      formData.get('gender') || null,
+        address:     (formData.get('address') || '').trim() || null,
+        program:     formData.get('program') || '',
+        enrollment:  formData.get('enrollment') || 'full-time',
+        prev_school: (formData.get('prevSchool') || '').trim() || null,
+        grad_year:   formData.get('gradYear') ? parseInt(formData.get('gradYear'), 10) : null,
+        newsletter:  formData.get('newsletter') === 'on',
+      };
+
+      // Validation
+      if (!studentData.full_name || !studentData.email || !studentData.dob || !studentData.program) {
+        showToast('Please fill in all required fields (marked with *).', 'error');
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentData.email)) {
+        showToast('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      if (!formData.get('terms')) {
+        showToast('Please accept the Terms of Service and Privacy Policy.', 'error');
+        return;
+      }
+
+      // Disable button
+      submitBtn.disabled = true;
+      const originalHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+      try {
+        // 🔥 TUMA KWA SUPABASE
+        const { data, error } = await supabaseClient
+          .from('students')
+          .insert([studentData])
+          .select();
+
+        if (error) throw error;
+
+        console.log('✅ Saved:', data);
+
+        showToast(`Registration successful! Welcome, ${studentData.full_name}.`, 'success', 5000);
+        form.reset();
+        if (document.activeElement) document.activeElement.blur();
+
+      } catch (err) {
+        console.error('❌ Supabase error:', err);
+
+        let msg = 'Something went wrong. Please try again.';
+        if (err.code === '23505' || (err.message && err.message.includes('duplicate'))) {
+          msg = 'This email is already registered. Please use another email.';
+        } else if (err.message) {
+          msg = err.message;
+        }
+        showToast(msg, 'error', 6000);
+
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+      }
+    });
+
+    // ============================================
+    // 6. Reset button
+    // ============================================
+    resetBtn.addEventListener('click', function () {
+      if (confirm('Are you sure you want to clear all fields?')) {
+        form.reset();
+        if (document.activeElement) document.activeElement.blur();
+        showToast('Form cleared.', 'info', 2000);
+      }
+    });
+
+    // ============================================
+    // 7. Test connection (optional — kwenye console)
+    // ============================================
+    (async () => {
+      try {
+        const { error } = await supabaseClient
+          .from('students')
+          .select('id', { count: 'exact', head: true });
+
+        if (error) throw error;
+        console.log('✅ Supabase connection OK — table "students" ipo tayari.');
+      } catch (err) {
+        console.warn('⚠️ Supabase connection warning:', err.message);
+        console.warn('👉 Hakikisha umeunda table "students" na RLS policy kwenye Supabase SQL Editor.');
+      }
+    })();
+  </script>
+</body>
+</html>
