@@ -18,6 +18,8 @@ let selectedSize = '';
 let selectedColor = '';
 let currentUser = null;
 let authMode = 'signin';
+let isAdmin = false;
+let selectedRating = 5;
 
 // ============================================
 // HELPERS
@@ -150,6 +152,7 @@ function openProduct(id) {
   currentProduct = p;
   selectedSize = p.sizes && p.sizes[0] ? p.sizes[0] : '';
   selectedColor = p.colors && p.colors[0] ? p.colors[0] : '';
+  selectedRating = 5;
 
   const sizesHTML = (p.sizes || []).map(s =>
     `<button class="option-btn ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${s}', this)">${esc(s)}</button>`
@@ -198,11 +201,16 @@ function openProduct(id) {
         <button class="add-detail-btn" onclick="addFromDetail()" ${p.stock === 0 ? 'disabled' : ''}>
           <i class="fas fa-shopping-cart"></i> ${p.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
+
+        <div class="reviews-section" id="reviewsSection">
+          <div class="loading"><i class="fas fa-spinner"></i> Loading reviews...</div>
+        </div>
       </div>
     </div>
   `;
 
   document.getElementById('productModal').classList.add('show');
+  loadReviews(p.id);
 }
 
 function selectSize(size, btn) {
@@ -235,6 +243,111 @@ function addFromDetail() {
 function closeProduct() {
   document.getElementById('productModal').classList.remove('show');
   currentProduct = null;
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+async function loadReviews(productId) {
+  const section = document.getElementById('reviewsSection');
+  if (!section) return;
+
+  section.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading reviews...</div>';
+
+  try {
+    const { data: reviews } = await db
+      .from('reviews')
+      .select('*')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+
+    const avgRating = reviews && reviews.length > 0
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : '0.0';
+
+    const reviewsList = reviews && reviews.length > 0
+      ? reviews.map(r => `
+          <div class="review-item">
+            <div class="review-top">
+              <span class="review-user">${esc(r.user_name)}</span>
+              <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+            </div>
+            <div class="review-comment">${esc(r.comment || '')}</div>
+            <div class="review-date">${new Date(r.created_at).toLocaleDateString('en-GB', { dateStyle: 'medium' })}</div>
+          </div>
+        `).join('')
+      : '<p style="color:#a3a3a3; font-size:0.9rem; padding:1rem 0;">No reviews yet. Be the first to review!</p>';
+
+    const reviewForm = currentUser
+      ? `
+          <div class="review-form">
+            <div class="star-selector" id="starSelector">
+              <span data-star="1" class="active">★</span>
+              <span data-star="2" class="active">★</span>
+              <span data-star="3" class="active">★</span>
+              <span data-star="4" class="active">★</span>
+              <span data-star="5" class="active">★</span>
+            </div>
+            <textarea id="reviewComment" placeholder="Share your experience with this product..."></textarea>
+            <div class="review-form-actions">
+              <button class="add-review-btn" onclick="submitReview(${productId})">
+                <i class="fas fa-paper-plane"></i> Submit Review
+              </button>
+            </div>
+          </div>
+        `
+      : '<p style="color:#a3a3a3; font-size:0.85rem; text-align:center; padding:1rem; background:#f7f7f5; border-radius:8px;">Sign in to write a review</p>';
+
+    section.innerHTML = `
+      <div class="reviews-header">
+        <h4>⭐ Reviews (${reviews ? reviews.length : 0})</h4>
+        <span style="font-weight:700; color:var(--primary);">${avgRating} / 5</span>
+      </div>
+      ${reviewForm}
+      <div style="margin-top:1.5rem;">${reviewsList}</div>
+    `;
+
+    const starSelector = document.getElementById('starSelector');
+    if (starSelector) {
+      starSelector.querySelectorAll('span').forEach(star => {
+        star.onclick = () => {
+          selectedRating = parseInt(star.dataset.star);
+          starSelector.querySelectorAll('span').forEach(s => {
+            s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
+          });
+        };
+      });
+    }
+  } catch (err) {
+    console.error('Reviews error:', err);
+    section.innerHTML = '<p style="color:#ef4444;">Error loading reviews</p>';
+  }
+}
+
+async function submitReview(productId) {
+  if (!currentUser) { toast('Sign in to review', 'error'); return; }
+
+  const comment = document.getElementById('reviewComment').value.trim();
+  if (!comment) { toast('Write your review first', 'error'); return; }
+
+  const userName = currentUser.email.split('@')[0];
+
+  try {
+    const { error } = await db.from('reviews').insert([{
+      product_id: productId,
+      user_id: currentUser.id,
+      user_name: userName,
+      rating: selectedRating,
+      comment: comment
+    }]);
+
+    if (error) throw error;
+
+    toast('✅ Review submitted! Thanks!', 'success');
+    loadReviews(productId);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
 }
 
 // ============================================
@@ -339,6 +452,17 @@ async function placeOrder() {
     return;
   }
 
+  // Payment method
+  const paymentRadios = document.querySelectorAll('input[name="payment"]');
+  const paymentMethod = paymentRadios.length > 0 
+    ? document.querySelector('input[name="payment"]:checked').value 
+    : 'cod';
+
+  if (paymentMethod === 'mpesa') {
+    toast('M-Pesa inakuja hivi karibuni! Tumia Cash on Delivery kwa sasa.', 'info');
+    return;
+  }
+
   const btn = document.getElementById('placeOrderBtn');
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing order...';
@@ -348,7 +472,8 @@ async function placeOrder() {
   try {
     const orderPayload = {
       customer_name: name, customer_email: email, customer_phone: phone,
-      shipping_address: address, total_amount: total, status: 'pending'
+      shipping_address: address, total_amount: total, status: 'pending',
+      payment_method: paymentMethod
     };
     if (currentUser) orderPayload.user_id = currentUser.id;
 
@@ -369,6 +494,16 @@ async function placeOrder() {
     renderCart();
     closeCheckout();
     toggleCart();
+
+    // Chaguo la kuunda akaunti (kama haujaingia) — kwa MODAL
+    if (!currentUser) {
+      window.pendingEmail = email;
+      window.pendingName = name;
+      setTimeout(() => {
+        document.getElementById('accountSuggestionModal').classList.add('show');
+      }, 500);
+    }
+
     document.getElementById('c_name').value = '';
     document.getElementById('c_email').value = '';
     document.getElementById('c_phone').value = '';
@@ -380,6 +515,30 @@ async function placeOrder() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-check"></i> Place Order';
   }
+}
+
+// ============================================
+// CREATE ACCOUNT FROM ORDER MODAL
+// ============================================
+function createAccountFromOrder() {
+  // Funga modal ya suggestion
+  document.getElementById('accountSuggestionModal').classList.remove('show');
+  
+  // Fungua Sign Up modal
+  openAuth();
+  switchAuthTab('signup');
+  
+  // Jaza email na jina
+  setTimeout(() => {
+    if (window.pendingEmail) {
+      document.getElementById('a_email').value = window.pendingEmail;
+      window.pendingEmail = null;
+    }
+    if (window.pendingName) {
+      document.getElementById('a_name').value = window.pendingName;
+      window.pendingName = null;
+    }
+  }, 200);
 }
 
 // ============================================
@@ -404,10 +563,13 @@ function updateUserUI() {
     icon.className = 'fas fa-user-check';
     label.textContent = currentUser.email.split('@')[0];
     email.textContent = currentUser.email;
+    checkAdminRole();
   } else {
     icon.className = 'fas fa-user';
     label.textContent = 'Sign In';
     email.textContent = '';
+    const adminBtn = document.getElementById('adminMenuBtn');
+    if (adminBtn) adminBtn.style.display = 'none';
   }
 }
 
@@ -540,6 +702,347 @@ async function openMyOrders() {
 
 function closeMyOrders() {
   document.getElementById('ordersModal').classList.remove('show');
+}
+
+// ============================================
+// ADMIN PANEL
+// ============================================
+async function checkAdminRole() {
+  if (!currentUser) { isAdmin = false; return; }
+  const { data, error } = await db.from('user_profiles').select('role').eq('id', currentUser.id).single();
+  console.log('🔍 Admin check:', data, error);
+  isAdmin = data && data.role === 'admin';
+  console.log('🔍 isAdmin:', isAdmin);
+  const adminBtn = document.getElementById('adminMenuBtn');
+  if (adminBtn) adminBtn.style.display = isAdmin ? 'flex' : 'none';
+}
+
+function openAdmin() {
+  document.getElementById('userMenu').classList.remove('show');
+  document.getElementById('page-admin').style.display = 'block';
+  const productsContainer = document.getElementById('products');
+  if (productsContainer) productsContainer.style.display = 'none';
+  const hero = document.querySelector('.hero');
+  if (hero) hero.style.display = 'none';
+  loadAdminData();
+  window.scrollTo(0, 0);
+}
+
+function closeAdmin() {
+  document.getElementById('page-admin').style.display = 'none';
+  const productsContainer = document.getElementById('products');
+  if (productsContainer) productsContainer.style.display = 'block';
+  const hero = document.querySelector('.hero');
+  if (hero) hero.style.display = 'block';
+}
+
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('admin-' + tab).classList.add('active');
+  if (tab === 'orders') loadAdminOrders();
+  else if (tab === 'analytics') loadAnalytics();
+  else loadAdminProducts();
+}
+
+async function loadAdminData() {
+  await Promise.all([loadAdminProducts(), loadAdminOrders()]);
+}
+
+async function loadAdminProducts() {
+  const tbody = document.getElementById('adminProductsTable');
+  try {
+    const { data } = await db.from('products').select('*').order('created_at', { ascending: false });
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">No products</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td><img src="${esc(p.image_url || 'https://via.placeholder.com/40')}" onerror="this.src='https://via.placeholder.com/40'"></td>
+        <td><strong>${esc(p.name)}</strong></td>
+        <td>${fmtPrice(p.price)}</td>
+        <td>${p.stock}</td>
+        <td>${(p.rating || 0).toFixed(1)} ⭐</td>
+        <td>
+          <button onclick="editAdminProduct(${p.id})" style="background:#3b82f6;color:white;border:none;padding:0.35rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.75rem;margin-right:0.3rem;"><i class="fas fa-pen"></i></button>
+          <button onclick="deleteAdminProduct(${p.id})" style="background:#ef4444;color:white;border:none;padding:0.35rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.75rem;"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</td></tr>';
+  }
+}
+
+async function loadAdminOrders() {
+  const tbody = document.getElementById('adminOrdersTable');
+  try {
+    const { data } = await db.from('orders').select('*').order('created_at', { ascending: false });
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">No orders</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td><strong>#${o.id}</strong></td>
+        <td>${esc(o.customer_name)}<br><span style="color:#a3a3a3;font-size:0.75rem;">${esc(o.customer_email)}</span></td>
+        <td>${new Date(o.created_at).toLocaleDateString('en-GB')}</td>
+        <td><strong>${fmtPrice(o.total_amount)}</strong><br><span style="font-size:0.7rem; color:#a3a3a3;">${o.payment_method === 'cod' ? '💵 COD' : '📱 M-Pesa'}</span></td>
+        <td>
+          <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:0.3rem; border-radius:6px; border:1.5px solid #e5e5e3; font-family:inherit; font-size:0.75rem; font-weight:700;">
+            <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>PENDING</option>
+            <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>PAID</option>
+            <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>SHIPPED</option>
+            <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>DELIVERED</option>
+            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>CANCELLED</option>
+          </select>
+        </td>
+        <td>
+          <button onclick="viewOrderItems(${o.id})" style="background:#3b82f6;color:white;border:none;padding:0.35rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.75rem;"><i class="fas fa-eye"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</td></tr>';
+  }
+}
+
+// ============================================
+// ANALYTICS
+// ============================================
+async function loadAnalytics() {
+  const content = document.getElementById('analyticsContent');
+  if (!content) return;
+
+  content.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading analytics...</div>';
+
+  try {
+    const { data: orders } = await db.from('orders').select('*');
+    const { data: products } = await db.from('products').select('*');
+    const { data: orderItems } = await db.from('order_items').select('*');
+    const { data: users } = await db.from('user_profiles').select('*');
+
+    const totalOrders = orders ? orders.length : 0;
+    const totalRevenue = orders ? orders.reduce((s, o) => s + (o.total_amount || 0), 0) : 0;
+    const pendingOrders = orders ? orders.filter(o => o.status === 'pending').length : 0;
+    const paidOrders = orders ? orders.filter(o => o.status === 'paid').length : 0;
+    const totalProducts = products ? products.length : 0;
+    const totalUsers = users ? users.length : 0;
+    const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const productSales = {};
+    (orderItems || []).forEach(item => {
+      if (!productSales[item.product_name]) productSales[item.product_name] = { qty: 0, revenue: 0 };
+      productSales[item.product_name].qty += item.quantity;
+      productSales[item.product_name].revenue += item.quantity * item.price;
+    });
+
+    const topProducts = Object.entries(productSales)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 5);
+
+    const recentOrders = (orders || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+
+    content.innerHTML = `
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="label">Total Revenue</div>
+          <div class="value">${fmtPrice(totalRevenue)}</div>
+          <div class="sub">Kutoka oda ${totalOrders}</div>
+        </div>
+        <div class="analytics-card">
+          <div class="label">Total Orders</div>
+          <div class="value">${totalOrders}</div>
+          <div class="sub">${pendingOrders} pending · ${paidOrders} paid</div>
+        </div>
+        <div class="analytics-card">
+          <div class="label">Average Order</div>
+          <div class="value">${fmtPrice(avgOrder)}</div>
+          <div class="sub">Kwa oda</div>
+        </div>
+        <div class="analytics-card">
+          <div class="label">Products</div>
+          <div class="value">${totalProducts}</div>
+          <div class="sub">Kwenye duka</div>
+        </div>
+        <div class="analytics-card">
+          <div class="label">Customers</div>
+          <div class="value">${totalUsers}</div>
+          <div class="sub">Waliojisajili</div>
+        </div>
+      </div>
+
+      <div class="analytics-section">
+        <h4>🏆 Top Selling Products</h4>
+        ${topProducts.length === 0
+          ? '<p style="color:#a3a3a3; font-size:0.9rem;">No sales yet</p>'
+          : topProducts.map(([name, data]) => `
+              <div class="top-product">
+                <div>
+                  <div class="top-product-name">${esc(name)}</div>
+                  <div style="font-size:0.75rem; color:#a3a3a3;">${data.qty} units sold</div>
+                </div>
+                <div class="top-product-sales">${fmtPrice(data.revenue)}</div>
+              </div>
+            `).join('')
+        }
+      </div>
+
+      <div class="analytics-section">
+        <h4>📦 Recent Orders</h4>
+        ${recentOrders.length === 0
+          ? '<p style="color:#a3a3a3; font-size:0.9rem;">No orders yet</p>'
+          : recentOrders.map(o => `
+              <div class="top-product">
+                <div>
+                  <div class="top-product-name">#${o.id} - ${esc(o.customer_name)}</div>
+                  <div style="font-size:0.75rem; color:#a3a3a3;">${new Date(o.created_at).toLocaleString('en-GB')}</div>
+                </div>
+                <div class="top-product-sales">${fmtPrice(o.total_amount)}</div>
+              </div>
+            `).join('')
+        }
+      </div>
+    `;
+  } catch (err) {
+    console.error('Analytics error:', err);
+    content.innerHTML = '<p style="color:#ef4444;">Error: ' + esc(err.message) + '</p>';
+  }
+}
+
+async function viewOrderItems(orderId) {
+  const { data } = await db.from('order_items').select('*').eq('order_id', orderId);
+  if (!data || data.length === 0) { toast('No items found', 'info'); return; }
+  const list = data.map(i => `• ${i.product_name} × ${i.quantity} = ${fmtPrice(i.price * i.quantity)}`).join('\n');
+  alert(`Order #${orderId} items:\n\n${list}`);
+}
+
+function openAdminProduct() {
+  document.getElementById('ap_id').value = '';
+  document.getElementById('ap_name').value = '';
+  document.getElementById('ap_desc').value = '';
+  document.getElementById('ap_price').value = '';
+  document.getElementById('ap_image').value = '';
+  document.getElementById('ap_stock').value = '0';
+  document.getElementById('ap_rating').value = '4.5';
+  document.getElementById('ap_featured').checked = false;
+  const fileInput = document.getElementById('ap_image_file');
+  if (fileInput) fileInput.value = '';
+
+  const catSelect = document.getElementById('ap_category');
+  catSelect.innerHTML = '<option value="">Select category</option>' +
+    allCategories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+
+  document.getElementById('adminProductTitle').textContent = 'Add Product';
+  document.getElementById('adminProductModal').classList.add('show');
+}
+
+async function editAdminProduct(id) {
+  const { data: p } = await db.from('products').select('*').eq('id', id).single();
+  if (!p) return;
+
+  document.getElementById('ap_id').value = p.id;
+  document.getElementById('ap_name').value = p.name || '';
+  document.getElementById('ap_desc').value = p.description || '';
+  document.getElementById('ap_price').value = p.price || '';
+  document.getElementById('ap_image').value = p.image_url || '';
+  document.getElementById('ap_stock').value = p.stock || 0;
+  document.getElementById('ap_rating').value = p.rating || 4.5;
+  document.getElementById('ap_featured').checked = p.is_featured || false;
+  const fileInput = document.getElementById('ap_image_file');
+  if (fileInput) fileInput.value = '';
+
+  const catSelect = document.getElementById('ap_category');
+  catSelect.innerHTML = '<option value="">Select category</option>' +
+    allCategories.map(c => `<option value="${c.id}" ${c.id === p.category_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+
+  document.getElementById('adminProductTitle').textContent = 'Edit Product';
+  document.getElementById('adminProductModal').classList.add('show');
+}
+
+async function saveAdminProduct() {
+  const id = document.getElementById('ap_id').value;
+  let imageUrl = document.getElementById('ap_image').value.trim() || null;
+
+  // Upload picha kama imechaguliwa
+  const fileInput = document.getElementById('ap_image_file');
+  if (fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      toast('Picha ni kubwa mno (max 5MB)', 'error');
+      return;
+    }
+
+    const fileName = `${Date.now()}-${file.name.replace(/\s/g, '-')}`;
+    const { data: uploadData, error: uploadError } = await db.storage
+      .from('product-images')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      toast('Upload failed: ' + uploadError.message, 'error');
+      return;
+    }
+
+    const { data: urlData } = db.storage
+      .from('product-images')
+      .getPublicUrl(fileName);
+
+    imageUrl = urlData.publicUrl;
+    toast('Picha imepakiwa!', 'success');
+  }
+
+  const payload = {
+    name: document.getElementById('ap_name').value.trim(),
+    description: document.getElementById('ap_desc').value.trim() || null,
+    price: parseFloat(document.getElementById('ap_price').value) || 0,
+    image_url: imageUrl,
+    category_id: parseInt(document.getElementById('ap_category').value) || null,
+    stock: parseInt(document.getElementById('ap_stock').value) || 0,
+    rating: parseFloat(document.getElementById('ap_rating').value) || 4.5,
+    is_featured: document.getElementById('ap_featured').checked
+  };
+
+  if (!payload.name || !payload.price) { toast('Fill name and price', 'error'); return; }
+
+  const btn = document.getElementById('saveAdminProductBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const { error } = id
+      ? await db.from('products').update(payload).eq('id', id)
+      : await db.from('products').insert([payload]);
+    if (error) throw error;
+
+    toast(id ? 'Product updated' : 'Product added', 'success');
+    document.getElementById('adminProductModal').classList.remove('show');
+    await loadAdminProducts();
+    await loadData();
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Product';
+  }
+}
+
+async function deleteAdminProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  const { error } = await db.from('products').delete().eq('id', id);
+  if (error) return toast(error.message, 'error');
+  toast('Product deleted', 'success');
+  await loadAdminProducts();
+  await loadData();
+}
+
+async function updateOrderStatus(orderId, status) {
+  const { error } = await db.from('orders').update({ status }).eq('id', orderId);
+  if (error) return toast(error.message, 'error');
+  toast('Order updated', 'success');
 }
 
 // ============================================
