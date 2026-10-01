@@ -144,6 +144,40 @@
     .add-detail-btn:hover:not(:disabled) { background: var(--primary); color: var(--secondary); }
     .add-detail-btn:disabled { background: var(--gray-400); cursor: not-allowed; }
 
+    /* REVIEWS */
+    .reviews-section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200); }
+    .reviews-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .reviews-header h4 { font-size: 1.1rem; font-weight: 800; }
+    .review-item { padding: 1rem 0; border-bottom: 1px solid var(--gray-100); }
+    .review-item:last-child { border-bottom: none; }
+    .review-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .review-user { font-weight: 700; font-size: 0.9rem; }
+    .review-stars { color: var(--primary); font-size: 0.85rem; }
+    .review-comment { color: var(--gray-600); font-size: 0.9rem; line-height: 1.6; }
+    .review-date { color: var(--gray-400); font-size: 0.75rem; margin-top: 0.3rem; }
+    .add-review-btn { background: var(--primary); color: var(--secondary); border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; }
+    .add-review-btn:hover { background: var(--primary-dark); }
+    .review-form { background: var(--gray-100); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; }
+    .review-form textarea { width: 100%; padding: 0.75rem; border: 1.5px solid var(--gray-200); border-radius: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 70px; outline: none; }
+    .review-form textarea:focus { border-color: var(--primary); background: white; }
+    .star-selector { display: flex; gap: 0.3rem; margin-bottom: 0.75rem; font-size: 1.5rem; cursor: pointer; }
+    .star-selector span { color: var(--gray-200); transition: color 0.15s; }
+    .star-selector span.active, .star-selector span:hover { color: var(--primary); }
+    .review-form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end; }
+
+    /* ANALYTICS */
+    .analytics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .analytics-card { background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid var(--gray-200); }
+    .analytics-card .label { font-size: 0.8rem; color: var(--gray-600); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .analytics-card .value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .analytics-card .sub { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.25rem; }
+    .analytics-section { background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid var(--gray-200); margin-bottom: 1rem; }
+    .analytics-section h4 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; }
+    .top-product { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-100); }
+    .top-product:last-child { border-bottom: none; }
+    .top-product-name { font-weight: 700; font-size: 0.9rem; }
+    .top-product-sales { color: var(--primary); font-weight: 800; font-size: 0.95rem; }
+
     /* TOAST */
     .toast { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); padding: 1rem 1.5rem; border-radius: 12px; color: white; font-weight: 600; z-index: 500; }
     .toast.success { background: #10b981; }
@@ -154,6 +188,25 @@
     .loading { text-align: center; padding: 3rem; color: var(--gray-400); grid-column: 1 / -1; }
     .loading i { font-size: 2rem; animation: spin 1s linear infinite; margin-bottom: 1rem; display: block; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ADMIN PANEL */
+    .admin-tab { display: none; }
+    .admin-tab.active { display: block; }
+    .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); }
+    .admin-nav button { background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; color: var(--gray-600); border-bottom: 2px solid transparent; }
+    .admin-nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+    .admin-header h3 { font-size: 1.2rem; font-weight: 800; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .admin-table th { text-align: left; padding: 0.75rem; background: var(--gray-100); color: var(--gray-600); font-size: 0.75rem; text-transform: uppercase; }
+    .admin-table td { padding: 0.75rem; border-bottom: 1px solid var(--gray-100); }
+    .admin-table img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+    .status-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-paid { background: #dbeafe; color: #1e40af; }
+    .status-shipped { background: #e0e7ff; color: #3730a3; }
+    .status-delivered { background: #d1fae5; color: #065f46; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
@@ -218,6 +271,116 @@
     <div class="products-grid" id="productsGrid"><div class="loading"><i class="fas fa-spinner"></i> Loading products...</div></div>
   </div>
 
+  <!-- ADMIN PAGE -->
+  <section class="page" id="page-admin" style="display:none;">
+    <div class="container">
+      <h2 class="section-title"><i class="fas fa-cog"></i> Admin Panel</h2>
+
+      <div class="admin-nav">
+        <button class="active" onclick="switchAdminTab('products', this)">Products</button>
+        <button onclick="switchAdminTab('orders', this)">Orders</button>
+        <button onclick="switchAdminTab('analytics', this)">Analytics</button>
+      </div>
+
+      <!-- PRODUCTS TAB -->
+      <div class="admin-tab active" id="admin-products">
+        <div class="admin-header">
+          <h3>All Products</h3>
+          <button class="btn btn-primary" onclick="openAdminProduct()">
+            <i class="fas fa-plus"></i> Add Product
+          </button>
+        </div>
+        <div class="card" style="padding: 0; overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductsTable">
+              <tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDERS TAB -->
+      <div class="admin-tab" id="admin-orders">
+        <div class="admin-header">
+          <h3>All Orders</h3>
+        </div>
+        <div class="card" style="padding: 0; overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminOrdersTable">
+              <tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANALYTICS TAB -->
+      <div class="admin-tab" id="admin-analytics">
+        <div class="admin-header">
+          <h3>Analytics Overview</h3>
+        </div>
+        <div id="analyticsContent">
+          <div class="loading"><i class="fas fa-spinner"></i> Loading analytics...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN PRODUCT MODAL -->
+  <div class="modal-overlay" id="adminProductModal">
+    <div class="modal">
+      <h2 id="adminProductTitle">Add Product</h2>
+      <p class="sub">Enter product details</p>
+
+      <input type="hidden" id="ap_id">
+      <div class="form-group"><label>Product Name *</label><input type="text" id="ap_name"></div>
+      <div class="form-group"><label>Description</label><textarea id="ap_desc"></textarea></div>
+      <div class="form-group"><label>Price (TZS) *</label><input type="number" id="ap_price" min="0"></div>
+      
+      <div class="form-group">
+        <label>Image</label>
+        <input type="text" id="ap_image" placeholder="https://... or upload below">
+        <div style="margin-top:0.5rem;">
+          <input type="file" id="ap_image_file" accept="image/*" style="font-size:0.85rem;">
+          <small style="color:#a3a3a3; font-size:0.75rem; display:block; margin-top:0.3rem;">Upload picha (max 5MB) au weka URL juu</small>
+        </div>
+      </div>
+      
+      <div class="form-group"><label>Category</label><select id="ap_category"></select></div>
+      <div class="form-group"><label>Stock</label><input type="number" id="ap_stock" min="0" value="0"></div>
+      <div class="form-group"><label>Rating (0-5)</label><input type="number" id="ap_rating" min="0" max="5" step="0.1" value="4.5"></div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:0.5rem;">
+          <input type="checkbox" id="ap_featured" style="width:auto;"> Featured Product
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeM('adminProductModal')">Cancel</button>
+        <button class="btn-confirm" id="saveAdminProductBtn" onclick="saveAdminProduct()">Save Product</button>
+      </div>
+    </div>
+  </div>
+
   <!-- CART SIDEBAR -->
   <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
   <aside class="cart-sidebar" id="cartSidebar">
@@ -234,10 +397,31 @@
     <div class="modal">
       <h2>Complete Your Order</h2>
       <p class="sub">Enter your details to place the order</p>
+      
+      <!-- Ujumbe wa Guest Checkout -->
+      <div style="background:#dbeafe; color:#1e40af; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; line-height:1.5;">
+        💡 <strong>Kumbuka:</strong> Unaweza kuagiza bila kujisajili. Kama unataka kufuatilia oda zako, <strong>Sign In</strong> kwanza.
+      </div>
+      
       <div class="form-group"><label>Full Name *</label><input type="text" id="c_name"></div>
       <div class="form-group"><label>Email *</label><input type="email" id="c_email"></div>
       <div class="form-group"><label>Phone *</label><input type="tel" id="c_phone"></div>
       <div class="form-group"><label>Shipping Address *</label><textarea id="c_address"></textarea></div>
+      
+      <div class="form-group">
+        <label>Payment Method *</label>
+        <div style="display:flex; gap:0.75rem; margin-top:0.4rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;">
+            <input type="radio" name="payment" value="cod" checked style="width:auto;">
+            <span style="font-weight:600;">💵 Cash on Delivery</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;">
+            <input type="radio" name="payment" value="mpesa" style="width:auto;">
+            <span style="font-weight:600;">📱 M-Pesa (Soon)</span>
+          </label>
+        </div>
+      </div>
+      
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeCheckout()">Cancel</button>
         <button class="btn-confirm" id="placeOrderBtn" onclick="placeOrder()"><i class="fas fa-check"></i> Place Order</button>
@@ -256,6 +440,7 @@
   <div class="user-menu" id="userMenu">
     <div class="user-menu-email" id="userMenuEmail"></div>
     <button class="user-menu-item" onclick="openMyOrders()"><i class="fas fa-box"></i> My Orders</button>
+    <button class="user-menu-item" id="adminMenuBtn" onclick="openAdmin()" style="display:none;"><i class="fas fa-cog"></i> Admin Panel</button>
     <button class="user-menu-item" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
   </div>
 
@@ -288,6 +473,39 @@
         <button class="close-cart" onclick="closeMyOrders()" style="font-size:1.5rem;">&times;</button>
       </div>
       <div id="ordersContent"><div class="loading"><i class="fas fa-spinner"></i> Loading orders...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT SUGGESTION MODAL (NEW) -->
+  <div class="modal-overlay" id="accountSuggestionModal">
+    <div class="modal" style="max-width:450px; text-align:center;">
+      <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
+      <h2 style="margin-bottom:0.5rem;">Oda imefanikiwa!</h2>
+      <p class="sub" style="margin-bottom:1.5rem;">Unataka kuunda akaunti ili kufuatilia oda zako?</p>
+      
+      <div style="text-align:left; background:#f7f7f5; padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;">
+          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
+          <span style="font-weight:500; font-size:0.9rem;">Ona historia ya oda</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;">
+          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
+          <span style="font-weight:500; font-size:0.9rem;">Fuatilia usafirishaji</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
+          <span style="font-weight:500; font-size:0.9rem;">Oda za haraka baadaye</span>
+        </div>
+      </div>
+      
+      <div style="display:flex; flex-direction:column; gap:0.75rem;">
+        <button class="btn-confirm" onclick="createAccountFromOrder()" style="width:100%; padding:1rem; font-size:1rem;">
+          <i class="fas fa-user-plus"></i> Unda Akaunti
+        </button>
+        <button class="btn-cancel" onclick="closeM('accountSuggestionModal')" style="width:100%; padding:1rem; font-size:1rem;">
+          Hapana, asante
+        </button>
+      </div>
     </div>
   </div>
 
