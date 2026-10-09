@@ -22,6 +22,11 @@ let authMode = 'signin';
 let isAdmin = false;
 let selectedRating = 5;
 
+// AWAMU 2: Coupon + Shipping state
+let appliedCoupon = null;
+let shippingZones = [];
+let selectedShipping = null;
+
 // ============================================
 // HELPERS
 // ============================================
@@ -195,7 +200,6 @@ function selectSuggestion(productId) {
   openProduct(productId);
 }
 
-// Funga suggestions ukibonyeza nje
 document.addEventListener('click', (e) => {
   const box = document.getElementById('searchSuggestions');
   const searchBar = document.querySelector('.search-bar');
@@ -241,7 +245,6 @@ async function toggleWishlist(productId) {
     }
     updateWishlistCount();
     renderProducts();
-    // Update detail view kama ipo
     const detailBtn = document.getElementById('detailWishlistBtn');
     if (detailBtn && currentProduct && currentProduct.id === productId) {
       const nowWishlisted = wishlist.includes(productId);
@@ -259,7 +262,6 @@ async function openWishlist() {
     return;
   }
   
-  // Funga user menu kama ipo wazi
   const userMenu = document.getElementById('userMenu');
   if (userMenu) userMenu.classList.remove('show');
   
@@ -267,7 +269,6 @@ async function openWishlist() {
   const content = document.getElementById('wishlistContent');
   content.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading wishlist...</div>';
   
-  // Pakia upya kutoka database
   await loadWishlist();
   
   if (wishlist.length === 0) {
@@ -611,11 +612,200 @@ function renderCart() {
   const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   document.getElementById('cartTotal').textContent = fmtPrice(total);
   footer.style.display = 'block';
+  
+  // AWAMU 2: Update breakdown kama checkout modal ipo wazi
+  const checkoutModal = document.getElementById('checkoutModal');
+  if (checkoutModal && checkoutModal.classList.contains('show')) {
+    updatePriceBreakdown();
+  }
 }
 
 function toggleCart() {
   document.getElementById('cartSidebar').classList.toggle('show');
   document.getElementById('cartOverlay').classList.toggle('show');
+}
+
+// ============================================
+// AWAMU 2: SHIPPING ZONES
+// ============================================
+async function loadShippingZones() {
+  try {
+    const { data, error } = await db
+      .from('shipping_zones')
+      .select('*')
+      .eq('is_active', true)
+      .order('fee');
+    if (error) throw error;
+    shippingZones = data || [];
+    const select = document.getElementById('c_shipping');
+    if (select) {
+      select.innerHTML = '<option value="">— Select region —</option>' +
+        shippingZones.map(z => `<option value="${z.id}">${esc(z.name)} (${z.fee.toLocaleString()} TZS · ${esc(z.eta_days || '')})</option>`).join('');
+    }
+    console.log('✅ Loaded', shippingZones.length, 'shipping zones');
+  } catch (err) {
+    console.error('Load shipping error:', err);
+  }
+}
+
+function updateShippingZone() {
+  const select = document.getElementById('c_shipping');
+  if (!select) return;
+  const zoneId = select.value;
+  selectedShipping = shippingZones.find(z => String(z.id) === String(zoneId)) || null;
+  updatePriceBreakdown();
+}
+
+// ============================================
+// AWAMU 2: COUPONS
+// ============================================
+async function applyCoupon() {
+  const input = document.getElementById('couponInput');
+  const btn = document.getElementById('couponApplyBtn');
+  const code = input.value.trim().toUpperCase();
+  
+  if (!code) { toast('Weka coupon code', 'error'); return; }
+  
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  
+  try {
+    const { data, error } = await db
+      .from('coupons')
+      .select('*')
+      .eq('code', code)
+      .eq('is_active', true)
+      .single();
+    
+    if (error || !data) throw new Error('Coupon haipo au imeisha');
+    
+    // Check expiry
+    if (data.valid_until && new Date(data.valid_until) < new Date()) {
+      throw new Error('Coupon imeisha muda wake');
+    }
+    
+    // Check max uses
+    if (data.max_uses && data.used_count >= data.max_uses) {
+      throw new Error('Coupon imetumika mara zote');
+    }
+    
+    // Check min order
+    const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+    if (data.min_order && subtotal < data.min_order) {
+      throw new Error(`Coupon inahitaji order ya angalau ${data.min_order.toLocaleString()} TZS`);
+    }
+    
+    // Success
+    appliedCoupon = {
+      code: data.code,
+      type: data.discount_type,
+      value: parseFloat(data.discount_value),
+      description: data.description || '',
+      minOrder: data.min_order
+    };
+    
+    // Show success UI
+    const box = document.getElementById('couponBox');
+    box.classList.add('coupon-applied');
+    document.getElementById('couponInputRow').style.display = 'none';
+    document.getElementById('couponSuccess').style.display = 'block';
+    document.getElementById('couponSuccess').innerHTML = `
+      <div class="coupon-success">
+        <div>
+          <div class="coupon-success-code">🎟️ ${esc(appliedCoupon.code)}</div>
+          <div class="coupon-success-desc">${esc(appliedCoupon.description)}</div>
+        </div>
+        <button class="coupon-remove-btn" onclick="removeCoupon()" title="Remove">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `;
+    
+    toast('✅ Coupon imetumika!', 'success');
+    updatePriceBreakdown();
+    
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Apply';
+  }
+}
+
+function removeCoupon() {
+  appliedCoupon = null;
+  const box = document.getElementById('couponBox');
+  box.classList.remove('coupon-applied');
+  document.getElementById('couponInputRow').style.display = 'flex';
+  document.getElementById('couponSuccess').style.display = 'none';
+  document.getElementById('couponInput').value = '';
+  updatePriceBreakdown();
+  toast('Coupon imeondolewa', 'info');
+}
+
+function calculateDiscount(subtotal) {
+  if (!appliedCoupon) return 0;
+  if (appliedCoupon.type === 'percent') {
+    return Math.round(subtotal * (appliedCoupon.value / 100));
+  }
+  return Math.min(appliedCoupon.value, subtotal);
+}
+
+function calculateShipping(subtotalAfterDiscount) {
+  if (!selectedShipping) return 0;
+  if (selectedShipping.free_above && subtotalAfterDiscount >= selectedShipping.free_above) {
+    return 0;
+  }
+  return parseFloat(selectedShipping.fee) || 0;
+}
+
+function updatePriceBreakdown() {
+  const el = document.getElementById('pbSubtotal');
+  if (!el) return;
+  
+  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const discount = calculateDiscount(subtotal);
+  const subtotalAfterDiscount = subtotal - discount;
+  const shipping = calculateShipping(subtotalAfterDiscount);
+  const total = subtotalAfterDiscount + shipping;
+  
+  document.getElementById('pbSubtotal').textContent = fmtPrice(subtotal);
+  
+  // Discount row
+  const discountRow = document.getElementById('pbDiscountRow');
+  if (discount > 0) {
+    discountRow.style.display = 'flex';
+    let label = 'Discount';
+    if (appliedCoupon) {
+      if (appliedCoupon.type === 'percent') {
+        label = `Discount (${appliedCoupon.value}%)`;
+      } else {
+        label = 'Discount';
+      }
+    }
+    document.getElementById('pbDiscountLabel').textContent = label;
+    document.getElementById('pbDiscount').textContent = '-' + fmtPrice(discount);
+  } else {
+    discountRow.style.display = 'none';
+  }
+  
+  // Shipping row
+  const shippingRow = document.getElementById('pbShippingRow');
+  if (shippingRow) {
+    shippingRow.style.display = 'flex';
+    if (selectedShipping) {
+      if (shipping === 0) {
+        document.getElementById('pbShipping').textContent = 'FREE 🎉';
+      } else {
+        document.getElementById('pbShipping').textContent = fmtPrice(shipping);
+      }
+    } else {
+      document.getElementById('pbShipping').textContent = '—';
+    }
+  }
+  
+  // Total
+  document.getElementById('pbTotal').textContent = fmtPrice(total);
 }
 
 // ============================================
@@ -626,6 +816,22 @@ function openCheckout() {
   if (currentUser) {
     document.getElementById('c_email').value = currentUser.email;
   }
+  
+  // AWAMU 2: Reset coupon + shipping
+  loadShippingZones();
+  appliedCoupon = null;
+  selectedShipping = null;
+  const box = document.getElementById('couponBox');
+  if (box) {
+    box.classList.remove('coupon-applied');
+    document.getElementById('couponInputRow').style.display = 'flex';
+    document.getElementById('couponSuccess').style.display = 'none';
+    document.getElementById('couponInput').value = '';
+  }
+  const shipSelect = document.getElementById('c_shipping');
+  if (shipSelect) shipSelect.value = '';
+  setTimeout(updatePriceBreakdown, 100);
+  
   document.getElementById('checkoutModal').classList.add('show');
 }
 
@@ -644,6 +850,12 @@ async function placeOrder() {
     return;
   }
 
+  // AWAMU 2: Check shipping zone
+  if (!selectedShipping) {
+    toast('Chagua shipping zone kwanza', 'error');
+    return;
+  }
+
   const paymentRadios = document.querySelectorAll('input[name="payment"]');
   const paymentMethod = paymentRadios.length > 0 
     ? document.querySelector('input[name="payment"]:checked').value 
@@ -658,13 +870,22 @@ async function placeOrder() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing order...';
 
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  // AWAMU 2: Hesabu subtotal, discount, shipping, total
+  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const discount = calculateDiscount(subtotal);
+  const subtotalAfterDiscount = subtotal - discount;
+  const shipping = calculateShipping(subtotalAfterDiscount);
+  const total = subtotalAfterDiscount + shipping;
 
   try {
     const orderPayload = {
       customer_name: name, customer_email: email, customer_phone: phone,
       shipping_address: address, total_amount: total, status: 'pending',
-      payment_method: paymentMethod
+      payment_method: paymentMethod,
+      coupon_code: appliedCoupon ? appliedCoupon.code : null,
+      discount_amount: discount,
+      shipping_fee: shipping,
+      shipping_zone: selectedShipping.name
     };
     if (currentUser) orderPayload.user_id = currentUser.id;
 
@@ -816,7 +1037,7 @@ async function submitAuth() {
       }
       toast('Account created! Welcome!', 'success');
     } else {
-      const { error } = await db.auth.signInWithPassword({ email, password });
+      const { error } = await db.signInWithPassword({ email, password });
       if (error) throw error;
       toast('Welcome back!', 'success');
     }
@@ -1310,3 +1531,4 @@ async function updateOrderStatus(orderId, status) {
 initAuth();
 loadData();
 loadDarkMode();
+loadShippingZones();
