@@ -43,16 +43,16 @@
     .cart-btn:hover { background: var(--primary); }
     .cart-count { position: absolute; top: -6px; right: -6px; background: var(--primary); color: var(--secondary); width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
 
-    /* NEW: DARK MODE BTN */
+    /* DARK MODE BTN */
     .dark-toggle-btn { background: white; color: #171717; border: 1.5px solid #e5e5e3; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; }
     .dark-toggle-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* NEW: WISHLIST BTN */
+    /* WISHLIST BTN */
     .wishlist-btn-header { position: relative; background: white; color: #171717; border: 1.5px solid #e5e5e3; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; }
     .wishlist-btn-header:hover { border-color: #ef4444; color: #ef4444; }
     .wishlist-count { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
 
-    /* NEW: SEARCH SUGGESTIONS */
+    /* SEARCH SUGGESTIONS */
     .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--gray-200); border-top: none; border-radius: 0 0 12px 12px; max-height: 400px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
     .search-suggestions.show { display: block; }
     .suggestion-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--gray-100); transition: background 0.15s; }
@@ -64,16 +64,16 @@
     .suggestion-price { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
     .suggestion-empty { padding: 1.5rem; text-align: center; color: var(--gray-400); font-size: 0.85rem; }
 
-    /* NEW: PRODUCT WISHLIST */
+    /* PRODUCT WISHLIST */
     .product-wishlist-btn { position: absolute; top: 1rem; right: 1rem; background: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--gray-400); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; z-index: 2; }
     .product-wishlist-btn:hover { transform: scale(1.1); color: #ef4444; }
     .product-wishlist-btn.active { color: #ef4444; background: #fee2e2; }
 
-    /* NEW: FORGOT PASSWORD */
+    /* FORGOT PASSWORD */
     .forgot-link { display: block; text-align: right; font-size: 0.8rem; color: var(--primary); font-weight: 600; text-decoration: none; margin-top: -0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
     .forgot-link:hover { text-decoration: underline; }
 
-    /* NEW: ORDER TIMELINE */
+    /* ORDER TIMELINE */
     .order-timeline { display: flex; justify-content: space-between; margin: 1rem 0; position: relative; }
     .order-timeline::before { content: ''; position: absolute; top: 16px; left: 10%; right: 10%; height: 2px; background: var(--gray-200); z-index: 0; }
     .timeline-step { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; flex: 1; position: relative; z-index: 1; }
@@ -84,7 +84,123 @@
     .timeline-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-align: center; }
     .timeline-step.done .timeline-label, .timeline-step.current .timeline-label { color: #171717; }
 
-    /* NEW: DARK MODE STYLES */
+    /* ============================================
+       AWAMU 2: COUPONS
+       ============================================ */
+    .coupon-box {
+      background: #fef3c7;
+      border: 2px dashed #f59e0b;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .coupon-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      color: #92400e;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .coupon-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .coupon-input-row input {
+      flex: 1;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid #f59e0b;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      background: white;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .coupon-input-row input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+    }
+    .coupon-apply-btn {
+      background: #f59e0b;
+      color: white;
+      border: none;
+      padding: 0.65rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+    .coupon-apply-btn:hover { background: #d97706; }
+    .coupon-apply-btn:disabled { background: #a3a3a3; cursor: not-allowed; }
+    
+    .coupon-applied {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+    .coupon-applied .coupon-header { color: #065f46; }
+    
+    .coupon-success {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: white;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+    }
+    .coupon-success-code {
+      font-weight: 800;
+      color: #065f46;
+      font-size: 1rem;
+    }
+    .coupon-success-desc {
+      font-size: 0.75rem;
+      color: #525252;
+      margin-top: 0.15rem;
+    }
+    .coupon-remove-btn {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .coupon-remove-btn:hover { background: #fecaca; }
+
+    /* AWAMU 2: PRICE BREAKDOWN */
+    .price-breakdown {
+      background: var(--gray-100);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      color: var(--gray-600);
+    }
+    .price-row.discount { color: #065f46; font-weight: 700; }
+    .price-row.shipping { color: #1e40af; }
+    .price-row.total {
+      border-top: 2px solid var(--gray-200);
+      padding-top: 0.65rem;
+      margin-top: 0.5rem;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    /* DARK MODE STYLES */
     body.dark { --gray-100: #0f0f0f; --gray-200: #262626; --gray-400: #737373; --gray-600: #a3a3a3; background: #0a0a0a; color: #f5f5f5; }
     body.dark .header, body.dark .product-card, body.dark .adv-filter-bar, body.dark .cart-sidebar, body.dark .modal, body.dark .user-menu, body.dark .analytics-card, body.dark .analytics-section, body.dark .admin-table th { background: #171717; border-color: #262626; color: #f5f5f5; }
     body.dark .search-bar input, body.dark .form-group input, body.dark .form-group textarea, body.dark .adv-filter-bar select, body.dark .adv-filter-bar input, body.dark .review-form textarea { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
@@ -94,6 +210,11 @@
     body.dark .section-title, body.dark .product-name, body.dark .top-product-name, body.dark h2, body.dark h3, body.dark h4 { color: #f5f5f5; }
     body.dark .top-product { border-bottom-color: #262626; }
     body.dark .review-item { border-bottom-color: #262626; }
+    body.dark .price-breakdown { background: #171717; }
+    body.dark .price-row { color: #a3a3a3; }
+    body.dark .price-row.total { border-top-color: #262626; }
+    body.dark .coupon-success { background: #0f0f0f; }
+    body.dark .coupon-success-desc { color: #a3a3a3; }
 
     /* HERO */
     .hero { background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%); color: white; padding: 4rem 2rem; text-align: center; }
@@ -169,8 +290,8 @@
     .modal .sub { color: var(--gray-600); font-size: 0.9rem; margin-bottom: 1.5rem; }
     .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
     .form-group label { font-weight: 600; font-size: 0.85rem; color: var(--gray-600); }
-    .form-group input, .form-group textarea { padding: 0.75rem 1rem; border: 1.5px solid var(--gray-200); border-radius: 10px; font-family: inherit; font-size: 0.9rem; outline: none; background: var(--gray-100); }
-    .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white; }
+    .form-group input, .form-group textarea, .form-group select { padding: 0.75rem 1rem; border: 1.5px solid var(--gray-200); border-radius: 10px; font-family: inherit; font-size: 0.9rem; outline: none; background: var(--gray-100); width: 100%; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); background: white; }
     .form-group textarea { resize: vertical; min-height: 70px; }
     .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
     .modal-actions button { flex: 1; padding: 0.9rem; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.95rem; }
@@ -468,6 +589,44 @@
       <div class="form-group"><label>Email *</label><input type="email" id="c_email"></div>
       <div class="form-group"><label>Phone *</label><input type="tel" id="c_phone"></div>
       <div class="form-group"><label>Shipping Address *</label><textarea id="c_address"></textarea></div>
+      
+      <!-- AWAMU 2: SHIPPING ZONE -->
+      <div class="form-group">
+        <label>Shipping Zone *</label>
+        <select id="c_shipping" onchange="updateShippingZone()">
+          <option value="">— Loading regions... —</option>
+        </select>
+      </div>
+      
+      <!-- AWAMU 2: COUPON -->
+      <div class="coupon-box" id="couponBox">
+        <div class="coupon-header">🎟️ Have a coupon code?</div>
+        <div class="coupon-input-row" id="couponInputRow">
+          <input type="text" id="couponInput" placeholder="ENTER CODE">
+          <button class="coupon-apply-btn" id="couponApplyBtn" onclick="applyCoupon()">Apply</button>
+        </div>
+        <div id="couponSuccess" style="display:none;"></div>
+      </div>
+      
+      <!-- AWAMU 2: PRICE BREAKDOWN -->
+      <div class="price-breakdown">
+        <div class="price-row">
+          <span>Subtotal</span>
+          <span id="pbSubtotal">0 TZS</span>
+        </div>
+        <div class="price-row discount" id="pbDiscountRow" style="display:none;">
+          <span id="pbDiscountLabel">Discount</span>
+          <span id="pbDiscount">-0 TZS</span>
+        </div>
+        <div class="price-row shipping" id="pbShippingRow">
+          <span>Shipping</span>
+          <span id="pbShipping">—</span>
+        </div>
+        <div class="price-row total">
+          <span>TOTAL</span>
+          <span id="pbTotal">0 TZS</span>
+        </div>
+      </div>
       
       <div class="form-group">
         <label>Payment Method *</label>
