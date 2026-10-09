@@ -20,10 +20,10 @@
     .logo { display: flex; align-items: center; gap: 0.6rem; font-size: 1.4rem; font-weight: 800; }
     .logo i { color: var(--primary); font-size: 1.6rem; }
     .search-bar { flex: 1; position: relative; max-width: 500px; }
-    .search-bar i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+    .search-bar i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); z-index: 2; }
     .search-bar input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1.5px solid var(--gray-200); border-radius: 10px; font-family: inherit; font-size: 0.9rem; outline: none; background: var(--gray-100); }
     .search-bar input:focus { border-color: var(--primary); background: white; }
-    .header-actions { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
 
     /* USER BTN */
     .user-btn { background: white; color: #171717; border: 1.5px solid #e5e5e3; padding: 0.6rem 1.2rem; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
@@ -42,6 +42,58 @@
     .cart-btn { position: relative; background: var(--secondary); color: white; border: none; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
     .cart-btn:hover { background: var(--primary); }
     .cart-count { position: absolute; top: -6px; right: -6px; background: var(--primary); color: var(--secondary); width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+
+    /* NEW: DARK MODE BTN */
+    .dark-toggle-btn { background: white; color: #171717; border: 1.5px solid #e5e5e3; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; }
+    .dark-toggle-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* NEW: WISHLIST BTN */
+    .wishlist-btn-header { position: relative; background: white; color: #171717; border: 1.5px solid #e5e5e3; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.15s; }
+    .wishlist-btn-header:hover { border-color: #ef4444; color: #ef4444; }
+    .wishlist-count { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+
+    /* NEW: SEARCH SUGGESTIONS */
+    .search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--gray-200); border-top: none; border-radius: 0 0 12px 12px; max-height: 400px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
+    .search-suggestions.show { display: block; }
+    .suggestion-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--gray-100); transition: background 0.15s; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--gray-100); }
+    .suggestion-item img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .suggestion-info { flex: 1; min-width: 0; }
+    .suggestion-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .suggestion-price { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+    .suggestion-empty { padding: 1.5rem; text-align: center; color: var(--gray-400); font-size: 0.85rem; }
+
+    /* NEW: PRODUCT WISHLIST */
+    .product-wishlist-btn { position: absolute; top: 1rem; right: 1rem; background: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--gray-400); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s; z-index: 2; }
+    .product-wishlist-btn:hover { transform: scale(1.1); color: #ef4444; }
+    .product-wishlist-btn.active { color: #ef4444; background: #fee2e2; }
+
+    /* NEW: FORGOT PASSWORD */
+    .forgot-link { display: block; text-align: right; font-size: 0.8rem; color: var(--primary); font-weight: 600; text-decoration: none; margin-top: -0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* NEW: ORDER TIMELINE */
+    .order-timeline { display: flex; justify-content: space-between; margin: 1rem 0; position: relative; }
+    .order-timeline::before { content: ''; position: absolute; top: 16px; left: 10%; right: 10%; height: 2px; background: var(--gray-200); z-index: 0; }
+    .timeline-step { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; flex: 1; position: relative; z-index: 1; }
+    .timeline-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--gray-200); color: var(--gray-400); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; border: 3px solid white; transition: all 0.3s; }
+    .timeline-step.done .timeline-icon { background: #10b981; color: white; }
+    .timeline-step.current .timeline-icon { background: var(--primary); color: var(--secondary); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .timeline-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-align: center; }
+    .timeline-step.done .timeline-label, .timeline-step.current .timeline-label { color: #171717; }
+
+    /* NEW: DARK MODE STYLES */
+    body.dark { --gray-100: #0f0f0f; --gray-200: #262626; --gray-400: #737373; --gray-600: #a3a3a3; background: #0a0a0a; color: #f5f5f5; }
+    body.dark .header, body.dark .product-card, body.dark .adv-filter-bar, body.dark .cart-sidebar, body.dark .modal, body.dark .user-menu, body.dark .analytics-card, body.dark .analytics-section, body.dark .admin-table th { background: #171717; border-color: #262626; color: #f5f5f5; }
+    body.dark .search-bar input, body.dark .form-group input, body.dark .form-group textarea, body.dark .adv-filter-bar select, body.dark .adv-filter-bar input, body.dark .review-form textarea { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
+    body.dark .filter-btn, body.dark .option-btn, body.dark .qty-btn, body.dark .clear-btn { background: #171717; color: #a3a3a3; border-color: #262626; }
+    body.dark .user-btn, body.dark .wishlist-btn-header, body.dark .dark-toggle-btn { background: #171717; color: #f5f5f5; border-color: #262626; }
+    body.dark .user-menu-item:hover, body.dark .suggestion-item:hover, body.dark .review-form { background: #262626; }
+    body.dark .section-title, body.dark .product-name, body.dark .top-product-name, body.dark h2, body.dark h3, body.dark h4 { color: #f5f5f5; }
+    body.dark .top-product { border-bottom-color: #262626; }
+    body.dark .review-item { border-bottom-color: #262626; }
 
     /* HERO */
     .hero { background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%); color: white; padding: 4rem 2rem; text-align: center; }
@@ -73,7 +125,7 @@
     .product-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--gray-200); transition: all 0.2s; cursor: pointer; position: relative; }
     .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
     .product-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--gray-100); }
-    .product-badge { position: absolute; top: 1rem; left: 1rem; background: var(--primary); color: var(--secondary); padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+    .product-badge { position: absolute; top: 1rem; left: 1rem; background: var(--primary); color: var(--secondary); padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; z-index: 2; }
     .product-info { padding: 1.2rem; }
     .product-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
     .product-desc { color: var(--gray-600); font-size: 0.85rem; margin-bottom: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -217,6 +269,8 @@
       .container { padding: 1.5rem 1rem; }
       .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
       .product-detail { grid-template-columns: 1fr; gap: 1.5rem; }
+      .order-timeline::before { left: 15%; right: 15%; }
+      .timeline-label { font-size: 0.6rem; }
     }
   </style>
 </head>
@@ -225,8 +279,19 @@
   <header class="header">
     <div class="header-inner">
       <div class="logo"><i class="fas fa-shopping-bag"></i> Style<span style="color:var(--primary);">Hub</span></div>
-      <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search products..." oninput="renderProducts()"></div>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search products..." oninput="handleSearchInput()" autocomplete="off">
+        <div class="search-suggestions" id="searchSuggestions"></div>
+      </div>
       <div class="header-actions">
+        <button class="dark-toggle-btn" id="darkToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+          <i class="fas fa-moon"></i>
+        </button>
+        <button class="wishlist-btn-header" onclick="openWishlist()" title="Wishlist">
+          <i class="fas fa-heart"></i>
+          <span class="wishlist-count" id="wishlistCount">0</span>
+        </button>
         <button class="user-btn" id="userBtn" onclick="handleUserClick()">
           <i class="fas fa-user" id="userIcon"></i>
           <span id="userLabel">Sign In</span>
@@ -282,7 +347,6 @@
         <button onclick="switchAdminTab('analytics', this)">Analytics</button>
       </div>
 
-      <!-- PRODUCTS TAB -->
       <div class="admin-tab active" id="admin-products">
         <div class="admin-header">
           <h3>All Products</h3>
@@ -309,7 +373,6 @@
         </div>
       </div>
 
-      <!-- ORDERS TAB -->
       <div class="admin-tab" id="admin-orders">
         <div class="admin-header">
           <h3>All Orders</h3>
@@ -333,7 +396,6 @@
         </div>
       </div>
 
-      <!-- ANALYTICS TAB -->
       <div class="admin-tab" id="admin-analytics">
         <div class="admin-header">
           <h3>Analytics Overview</h3>
@@ -398,7 +460,6 @@
       <h2>Complete Your Order</h2>
       <p class="sub">Enter your details to place the order</p>
       
-      <!-- Ujumbe wa Guest Checkout -->
       <div style="background:#dbeafe; color:#1e40af; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; line-height:1.5;">
         💡 <strong>Kumbuka:</strong> Unaweza kuagiza bila kujisajili. Kama unataka kufuatilia oda zako, <strong>Sign In</strong> kwanza.
       </div>
@@ -440,6 +501,7 @@
   <div class="user-menu" id="userMenu">
     <div class="user-menu-email" id="userMenuEmail"></div>
     <button class="user-menu-item" onclick="openMyOrders()"><i class="fas fa-box"></i> My Orders</button>
+    <button class="user-menu-item" onclick="openWishlist()"><i class="fas fa-heart"></i> My Wishlist</button>
     <button class="user-menu-item" id="adminMenuBtn" onclick="openAdmin()" style="display:none;"><i class="fas fa-cog"></i> Admin Panel</button>
     <button class="user-menu-item" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
   </div>
@@ -458,9 +520,23 @@
       </div>
       <div class="form-group"><label>Email *</label><input type="email" id="a_email"></div>
       <div class="form-group"><label>Password *</label><input type="password" id="a_password" placeholder="At least 6 characters"></div>
+      <a class="forgot-link" id="forgotLink" onclick="handleForgotPassword()">Forgot password?</a>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeAuth()">Cancel</button>
         <button class="btn-confirm" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSWORD RESET MODAL -->
+  <div class="modal-overlay" id="resetPasswordModal">
+    <div class="modal" style="max-width:450px;">
+      <h2>Reset Password</h2>
+      <p class="sub">Tuta-kutumia link ya kubadilisha password kwenye email yako.</p>
+      <div class="form-group"><label>Email *</label><input type="email" id="reset_email" placeholder="your@email.com"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeM('resetPasswordModal')">Cancel</button>
+        <button class="btn-confirm" id="resetPasswordBtn" onclick="sendPasswordReset()">Send Reset Link</button>
       </div>
     </div>
   </div>
@@ -476,7 +552,18 @@
     </div>
   </div>
 
-  <!-- ACCOUNT SUGGESTION MODAL (NEW) -->
+  <!-- WISHLIST MODAL -->
+  <div class="modal-overlay" id="wishlistModal">
+    <div class="modal" style="max-width:700px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h2><i class="fas fa-heart" style="color:#ef4444;"></i> My Wishlist</h2>
+        <button class="close-cart" onclick="closeM('wishlistModal')" style="font-size:1.5rem;">&times;</button>
+      </div>
+      <div id="wishlistContent"><div class="loading"><i class="fas fa-spinner"></i> Loading wishlist...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT SUGGESTION MODAL -->
   <div class="modal-overlay" id="accountSuggestionModal">
     <div class="modal" style="max-width:450px; text-align:center;">
       <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
