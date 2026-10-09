@@ -12,6 +12,7 @@ console.log('🛍️ StyleHub started');
 let allProducts = [];
 let allCategories = [];
 let cart = [];
+let wishlist = [];
 let activeCategory = '';
 let currentProduct = null;
 let selectedSize = '';
@@ -38,6 +39,11 @@ function esc(s) {
 
 function fmtPrice(n) {
   return Number(n || 0).toLocaleString('en-US') + ' TZS';
+}
+
+function closeM(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
 }
 
 // ============================================
@@ -111,6 +117,11 @@ function renderProducts() {
   grid.innerHTML = list.map(p => `
     <div class="product-card" onclick="openProduct(${p.id})">
       ${p.is_featured ? '<span class="product-badge">Featured</span>' : ''}
+      <button class="product-wishlist-btn ${wishlist.includes(p.id) ? 'active' : ''}" 
+        onclick="event.stopPropagation(); toggleWishlist(${p.id})" 
+        title="Wishlist">
+        <i class="fas fa-heart"></i>
+      </button>
       <img src="${esc(p.image_url || 'https://via.placeholder.com/400')}" alt="${esc(p.name)}" class="product-img" onerror="this.src='https://via.placeholder.com/400?text=No+Image'">
       <div class="product-info">
         <div class="product-name">${esc(p.name)}</div>
@@ -143,6 +154,179 @@ function clearFilters() {
 }
 
 // ============================================
+// AWAMU 1: SEARCH AUTOCOMPLETE
+// ============================================
+function handleSearchInput() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const box = document.getElementById('searchSuggestions');
+  if (!box) return;
+  
+  if (query.length < 2) {
+    box.classList.remove('show');
+    renderProducts();
+    return;
+  }
+  
+  const matches = allProducts
+    .filter(p => p.name.toLowerCase().includes(query))
+    .slice(0, 8);
+  
+  if (matches.length === 0) {
+    box.innerHTML = '<div class="suggestion-empty"><i class="fas fa-search"></i> Hakuna bidhaa iliyopatikana</div>';
+  } else {
+    box.innerHTML = matches.map(p => `
+      <div class="suggestion-item" onclick="selectSuggestion(${p.id})">
+        <img src="${esc(p.image_url || 'https://via.placeholder.com/44')}" onerror="this.src='https://via.placeholder.com/44'">
+        <div class="suggestion-info">
+          <div class="suggestion-name">${esc(p.name)}</div>
+          <div class="suggestion-price">${fmtPrice(p.price)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  box.classList.add('show');
+  renderProducts();
+}
+
+function selectSuggestion(productId) {
+  document.getElementById('searchSuggestions').classList.remove('show');
+  document.getElementById('searchInput').value = '';
+  renderProducts();
+  openProduct(productId);
+}
+
+// Funga suggestions ukibonyeza nje
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('searchSuggestions');
+  const searchBar = document.querySelector('.search-bar');
+  if (box && searchBar && !searchBar.contains(e.target)) {
+    box.classList.remove('show');
+  }
+});
+
+// ============================================
+// AWAMU 1: WISHLIST
+// ============================================
+async function loadWishlist() {
+  if (!currentUser) { wishlist = []; updateWishlistCount(); return; }
+  const { data } = await db.from('wishlists').select('product_id').eq('user_id', currentUser.id);
+  wishlist = (data || []).map(w => w.product_id);
+  updateWishlistCount();
+  renderProducts();
+}
+
+function updateWishlistCount() {
+  const el = document.getElementById('wishlistCount');
+  if (el) el.textContent = wishlist.length;
+}
+
+async function toggleWishlist(productId) {
+  if (!currentUser) {
+    toast('Sign in ili kuweka wishlist', 'error');
+    openAuth();
+    return;
+  }
+  
+  const isWishlisted = wishlist.includes(productId);
+  
+  try {
+    if (isWishlisted) {
+      await db.from('wishlists').delete().eq('user_id', currentUser.id).eq('product_id', productId);
+      wishlist = wishlist.filter(id => id !== productId);
+      toast('Imetolewa kwenye wishlist', 'info');
+    } else {
+      await db.from('wishlists').insert([{ user_id: currentUser.id, product_id: productId }]);
+      wishlist.push(productId);
+      toast('❤️ Imeongezwa kwenye wishlist', 'success');
+    }
+    updateWishlistCount();
+    renderProducts();
+    // Update detail view kama ipo
+    const detailBtn = document.getElementById('detailWishlistBtn');
+    if (detailBtn && currentProduct && currentProduct.id === productId) {
+      const nowWishlisted = wishlist.includes(productId);
+      detailBtn.classList.toggle('active', nowWishlisted);
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function openWishlist() {
+  if (!currentUser) {
+    toast('Sign in ili kuona wishlist', 'error');
+    openAuth();
+    return;
+  }
+  
+  // Funga user menu kama ipo wazi
+  const userMenu = document.getElementById('userMenu');
+  if (userMenu) userMenu.classList.remove('show');
+  
+  document.getElementById('wishlistModal').classList.add('show');
+  const content = document.getElementById('wishlistContent');
+  content.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading wishlist...</div>';
+  
+  // Pakia upya kutoka database
+  await loadWishlist();
+  
+  if (wishlist.length === 0) {
+    content.innerHTML = `
+      <div style="text-align:center; padding:3rem; color:var(--gray-400);">
+        <i class="fas fa-heart-broken" style="font-size:3rem; margin-bottom:1rem;"></i>
+        <p>Wishlist yako ni tupu</p>
+        <p style="font-size:0.85rem; margin-top:0.5rem;">Bonyeza ❤️ kwenye bidhaa kuongeza</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const items = allProducts.filter(p => wishlist.includes(p.id));
+  
+  content.innerHTML = items.map(p => `
+    <div style="display:flex; gap:1rem; padding:1rem; border-bottom:1px solid var(--gray-100); align-items:center;">
+      <img src="${esc(p.image_url || 'https://via.placeholder.com/80')}" style="width:80px; height:80px; object-fit:cover; border-radius:10px; cursor:pointer;" onclick="closeM('wishlistModal'); openProduct(${p.id})" onerror="this.src='https://via.placeholder.com/80'">
+      <div style="flex:1;">
+        <div style="font-weight:700; cursor:pointer;" onclick="closeM('wishlistModal'); openProduct(${p.id})">${esc(p.name)}</div>
+        <div style="color:var(--primary); font-weight:800; margin-top:0.25rem;">${fmtPrice(p.price)}</div>
+        <div style="font-size:0.75rem; color:var(--gray-400); margin-top:0.25rem;">${p.stock > 0 ? '✓ In stock' : '✗ Out of stock'}</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        <button onclick="addToCart(${p.id})" style="background:var(--secondary); color:white; border:none; padding:0.5rem 0.9rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.8rem;" ${p.stock === 0 ? 'disabled' : ''}>
+          <i class="fas fa-cart-plus"></i> Add
+        </button>
+        <button onclick="toggleWishlist(${p.id}); setTimeout(openWishlist, 200);" style="background:#fee2e2; color:#dc2626; border:none; padding:0.5rem 0.9rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.8rem;">
+          <i class="fas fa-trash"></i> Remove
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// AWAMU 1: DARK MODE
+// ============================================
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('darkMode', isDark ? '1' : '0');
+  
+  const icon = document.querySelector('#darkToggle i');
+  if (icon) {
+    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  }
+}
+
+function loadDarkMode() {
+  const isDark = localStorage.getItem('darkMode') === '1';
+  if (isDark) {
+    document.body.classList.add('dark');
+    const icon = document.querySelector('#darkToggle i');
+    if (icon) icon.className = 'fas fa-sun';
+  }
+}
+
+// ============================================
 // PRODUCT DETAILS
 // ============================================
 function openProduct(id) {
@@ -164,6 +348,7 @@ function openProduct(id) {
 
   const stockClass = p.stock > 0 ? 'stock-in' : 'stock-out';
   const stockText = p.stock > 0 ? `✓ In Stock (${p.stock})` : '✗ Out of Stock';
+  const isWishlisted = wishlist.includes(p.id);
 
   document.getElementById('productDetailContent').innerHTML = `
     <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
@@ -172,6 +357,13 @@ function openProduct(id) {
     <div class="product-detail">
       <img src="${esc(p.image_url || 'https://via.placeholder.com/500')}" alt="${esc(p.name)}" class="product-detail-img" onerror="this.src='https://via.placeholder.com/500?text=No+Image'">
       <div class="product-detail-info">
+        <button class="product-wishlist-btn ${isWishlisted ? 'active' : ''}" 
+          id="detailWishlistBtn"
+          onclick="toggleWishlist(${p.id})" 
+          style="position:relative; top:auto; right:auto; margin-bottom:1rem; float:right;"
+          title="Wishlist">
+          <i class="fas fa-heart"></i>
+        </button>
         <h2>${esc(p.name)}</h2>
         <div class="product-rating" style="font-size:1rem;">
           ${'★'.repeat(Math.floor(p.rating || 0))}${'☆'.repeat(5 - Math.floor(p.rating || 0))}
@@ -452,7 +644,6 @@ async function placeOrder() {
     return;
   }
 
-  // Payment method
   const paymentRadios = document.querySelectorAll('input[name="payment"]');
   const paymentMethod = paymentRadios.length > 0 
     ? document.querySelector('input[name="payment"]:checked').value 
@@ -495,7 +686,6 @@ async function placeOrder() {
     closeCheckout();
     toggleCart();
 
-    // Chaguo la kuunda akaunti (kama haujaingia) — kwa MODAL
     if (!currentUser) {
       window.pendingEmail = email;
       window.pendingName = name;
@@ -521,14 +711,10 @@ async function placeOrder() {
 // CREATE ACCOUNT FROM ORDER MODAL
 // ============================================
 function createAccountFromOrder() {
-  // Funga modal ya suggestion
   document.getElementById('accountSuggestionModal').classList.remove('show');
-  
-  // Fungua Sign Up modal
   openAuth();
   switchAuthTab('signup');
   
-  // Jaza email na jina
   setTimeout(() => {
     if (window.pendingEmail) {
       document.getElementById('a_email').value = window.pendingEmail;
@@ -564,10 +750,14 @@ function updateUserUI() {
     label.textContent = currentUser.email.split('@')[0];
     email.textContent = currentUser.email;
     checkAdminRole();
+    loadWishlist();
   } else {
     icon.className = 'fas fa-user';
     label.textContent = 'Sign In';
     email.textContent = '';
+    wishlist = [];
+    updateWishlistCount();
+    renderProducts();
     const adminBtn = document.getElementById('adminMenuBtn');
     if (adminBtn) adminBtn.style.display = 'none';
   }
@@ -659,7 +849,64 @@ document.addEventListener('click', (e) => {
 });
 
 // ============================================
-// MY ORDERS
+// AWAMU 1: PASSWORD RESET
+// ============================================
+function handleForgotPassword() {
+  const emailInput = document.getElementById('a_email').value.trim();
+  closeAuth();
+  document.getElementById('resetPasswordModal').classList.add('show');
+  if (emailInput) {
+    document.getElementById('reset_email').value = emailInput;
+  }
+}
+
+async function sendPasswordReset() {
+  const email = document.getElementById('reset_email').value.trim();
+  if (!email) { toast('Weka email yako', 'error'); return; }
+  
+  const btn = document.getElementById('resetPasswordBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  
+  try {
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    toast('✅ Link imetumwa! Angalia email yako.', 'success');
+    closeM('resetPasswordModal');
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link';
+  }
+}
+
+// ============================================
+// AWAMU 1: ORDER TRACKING TIMELINE
+// ============================================
+function getOrderTimeline(status) {
+  const steps = [
+    { key: 'pending', label: 'Pending', icon: 'fa-clock' },
+    { key: 'paid', label: 'Paid', icon: 'fa-check' },
+    { key: 'shipped', label: 'Shipped', icon: 'fa-truck' },
+    { key: 'delivered', label: 'Delivered', icon: 'fa-home' }
+  ];
+  
+  if (status === 'cancelled') {
+    return steps.map(s => ({ ...s, status: 'cancelled' }));
+  }
+  
+  const currentIndex = steps.findIndex(s => s.key === status);
+  return steps.map((s, i) => ({
+    ...s,
+    status: i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending'
+  }));
+}
+
+// ============================================
+// MY ORDERS (Na Timeline)
 // ============================================
 async function openMyOrders() {
   document.getElementById('userMenu').classList.remove('show');
@@ -681,19 +928,32 @@ async function openMyOrders() {
       return;
     }
 
-    content.innerHTML = orders.map(o => `
-      <div style="background:#f7f7f5; border-radius:12px; padding:1rem; margin-bottom:1rem; border:1px solid #e5e5e3;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-          <strong>Order #${o.id}</strong>
-          <span style="background:#fef3c7; color:#92400e; padding:0.25rem 0.6rem; border-radius:20px; font-size:0.7rem; font-weight:700; text-transform:uppercase;">${o.status}</span>
+    content.innerHTML = orders.map(o => {
+      const timeline = getOrderTimeline(o.status);
+      return `
+        <div style="background:var(--gray-100); border-radius:12px; padding:1rem; margin-bottom:1rem; border:1px solid var(--gray-200);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+            <strong>Order #${o.id}</strong>
+            <span class="status-${o.status}" style="padding:0.25rem 0.6rem; border-radius:20px; font-size:0.7rem; font-weight:700; text-transform:uppercase;">${o.status}</span>
+          </div>
+          <div style="font-size:0.85rem; color:var(--gray-600); margin-bottom:0.75rem;">
+            <div><i class="fas fa-calendar"></i> ${new Date(o.created_at).toLocaleString('en-GB')}</div>
+            <div><i class="fas fa-map-marker-alt"></i> ${esc(o.shipping_address)}</div>
+          </div>
+          ${o.status !== 'cancelled' ? `
+            <div class="order-timeline">
+              ${timeline.map(step => `
+                <div class="timeline-step ${step.status}">
+                  <div class="timeline-icon"><i class="fas ${step.icon}"></i></div>
+                  <div class="timeline-label">${step.label}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div style="font-size:1.1rem; font-weight:800; color:var(--primary); text-align:right; margin-top:0.5rem;">${fmtPrice(o.total_amount)}</div>
         </div>
-        <div style="font-size:0.85rem; color:#525252; margin-bottom:0.4rem;">
-          <div><i class="fas fa-calendar"></i> ${new Date(o.created_at).toLocaleString('en-GB')}</div>
-          <div><i class="fas fa-map-marker-alt"></i> ${esc(o.shipping_address)}</div>
-        </div>
-        <div style="font-size:1.1rem; font-weight:800; color:#c9a227; text-align:right;">${fmtPrice(o.total_amount)}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch (err) {
     console.error(err);
     content.innerHTML = '<div style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</div>';
@@ -968,7 +1228,6 @@ async function saveAdminProduct() {
   const id = document.getElementById('ap_id').value;
   let imageUrl = document.getElementById('ap_image').value.trim() || null;
 
-  // Upload picha kama imechaguliwa
   const fileInput = document.getElementById('ap_image_file');
   if (fileInput && fileInput.files.length > 0) {
     const file = fileInput.files[0];
@@ -1050,3 +1309,4 @@ async function updateOrderStatus(orderId, status) {
 // ============================================
 initAuth();
 loadData();
+loadDarkMode();
