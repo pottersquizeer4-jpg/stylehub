@@ -51,6 +51,16 @@ function closeM(id) {
   if (el) el.classList.remove('show');
 }
 
+// ✅ ULINZI: Kila function ya admin ina-check hii
+function requireAdmin() {
+  if (!isAdmin) {
+    toast('⛔ Huna ruhusa ya kufanya hivi', 'error');
+    console.warn('🚫 Admin access denied for:', currentUser ? currentUser.email : 'guest');
+    return false;
+  }
+  return true;
+}
+
 // ============================================
 // LOAD DATA
 // ============================================
@@ -613,7 +623,6 @@ function renderCart() {
   document.getElementById('cartTotal').textContent = fmtPrice(total);
   footer.style.display = 'block';
   
-  // AWAMU 2: Update breakdown kama checkout modal ipo wazi
   const checkoutModal = document.getElementById('checkoutModal');
   if (checkoutModal && checkoutModal.classList.contains('show')) {
     updatePriceBreakdown();
@@ -679,23 +688,19 @@ async function applyCoupon() {
     
     if (error || !data) throw new Error('Coupon haipo au imeisha');
     
-    // Check expiry
     if (data.valid_until && new Date(data.valid_until) < new Date()) {
       throw new Error('Coupon imeisha muda wake');
     }
     
-    // Check max uses
     if (data.max_uses && data.used_count >= data.max_uses) {
       throw new Error('Coupon imetumika mara zote');
     }
     
-    // Check min order
     const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
     if (data.min_order && subtotal < data.min_order) {
       throw new Error(`Coupon inahitaji order ya angalau ${data.min_order.toLocaleString()} TZS`);
     }
     
-    // Success
     appliedCoupon = {
       code: data.code,
       type: data.discount_type,
@@ -704,7 +709,6 @@ async function applyCoupon() {
       minOrder: data.min_order
     };
     
-    // Show success UI
     const box = document.getElementById('couponBox');
     box.classList.add('coupon-applied');
     document.getElementById('couponInputRow').style.display = 'none';
@@ -771,7 +775,6 @@ function updatePriceBreakdown() {
   
   document.getElementById('pbSubtotal').textContent = fmtPrice(subtotal);
   
-  // Discount row
   const discountRow = document.getElementById('pbDiscountRow');
   if (discount > 0) {
     discountRow.style.display = 'flex';
@@ -789,7 +792,6 @@ function updatePriceBreakdown() {
     discountRow.style.display = 'none';
   }
   
-  // Shipping row
   const shippingRow = document.getElementById('pbShippingRow');
   if (shippingRow) {
     shippingRow.style.display = 'flex';
@@ -804,7 +806,6 @@ function updatePriceBreakdown() {
     }
   }
   
-  // Total
   document.getElementById('pbTotal').textContent = fmtPrice(total);
 }
 
@@ -817,7 +818,6 @@ function openCheckout() {
     document.getElementById('c_email').value = currentUser.email;
   }
   
-  // AWAMU 2: Reset coupon + shipping
   loadShippingZones();
   appliedCoupon = null;
   selectedShipping = null;
@@ -850,7 +850,6 @@ async function placeOrder() {
     return;
   }
 
-  // AWAMU 2: Check shipping zone
   if (!selectedShipping) {
     toast('Chagua shipping zone kwanza', 'error');
     return;
@@ -870,7 +869,6 @@ async function placeOrder() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing order...';
 
-  // AWAMU 2: Hesabu subtotal, discount, shipping, total
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const discount = calculateDiscount(subtotal);
   const subtotalAfterDiscount = subtotal - discount;
@@ -956,9 +954,18 @@ async function initAuth() {
   currentUser = session ? session.user : null;
   updateUserUI();
 
-  db.auth.onAuthStateChange((_event, session) => {
+  db.auth.onAuthStateChange((event, session) => {
+    console.log('🔐 Auth event:', event);
     currentUser = session ? session.user : null;
     updateUserUI();
+    
+    // ✅ FORGOT PASSWORD: Detect recovery link click
+    if (event === 'PASSWORD_RECOVERY') {
+      console.log('🔑 PASSWORD_RECOVERY detected — showing set password modal');
+      setTimeout(() => {
+        openSetPasswordModal();
+      }, 500);
+    }
   });
 }
 
@@ -979,8 +986,15 @@ function updateUserUI() {
     wishlist = [];
     updateWishlistCount();
     renderProducts();
+    // ✅ ULINZI: Ficha admin page na button wakati wa sign out
     const adminBtn = document.getElementById('adminMenuBtn');
     if (adminBtn) adminBtn.style.display = 'none';
+    const adminPage = document.getElementById('page-admin');
+    if (adminPage) adminPage.style.display = 'none';
+    const productsContainer = document.getElementById('products');
+    if (productsContainer) productsContainer.style.display = 'block';
+    const hero = document.querySelector('.hero');
+    if (hero) hero.style.display = 'block';
   }
 }
 
@@ -1033,11 +1047,16 @@ async function submitAuth() {
       const { data, error } = await db.auth.signUp({ email, password });
       if (error) throw error;
       if (data.user) {
-        await db.from('user_profiles').insert([{ id: data.user.id, full_name: name }]);
+        // ✅ ULINZI: role ina-default 'user' kutoka SQL
+        await db.from('user_profiles').insert([{ 
+          id: data.user.id, 
+          full_name: name 
+          // ❌ HATUWEKI role hapa - ina-default 'user'
+        }]);
       }
       toast('Account created! Welcome!', 'success');
     } else {
-      const { error } = await db.signInWithPassword({ email, password });
+      const { error } = await db.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast('Welcome back!', 'success');
     }
@@ -1101,6 +1120,148 @@ async function sendPasswordReset() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Send Reset Link';
+  }
+}
+
+// ============================================
+// AWAMU 1: SET NEW PASSWORD (Recovery Flow)
+// ============================================
+function openSetPasswordModal() {
+  const modal = document.getElementById('setPasswordModal');
+  if (!modal) {
+    console.warn('setPasswordModal haipo kwenye HTML');
+    return;
+  }
+  
+  const content = document.getElementById('setPasswordContent');
+  content.innerHTML = `
+    <h2>Set New Password</h2>
+    <p class="sub">Weka password mpya kwa akaunti yako.</p>
+    
+    <div class="form-group">
+      <label>New Password *</label>
+      <input type="password" id="new_password" placeholder="At least 6 characters" oninput="checkPasswordStrength()">
+      <div class="password-strength">
+        <div class="password-strength-fill" id="passwordStrengthBar"></div>
+      </div>
+      <div class="password-hint" id="passwordHint">Angalau herufi 6</div>
+    </div>
+    
+    <div class="form-group">
+      <label>Confirm Password *</label>
+      <input type="password" id="confirm_password" placeholder="Rudia password" oninput="checkPasswordMatch()">
+      <div class="password-hint" id="confirmHint"></div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-confirm" id="setPasswordBtn" onclick="updatePassword()">
+        <i class="fas fa-save"></i> Save Password
+      </button>
+    </div>
+  `;
+  
+  modal.classList.add('show');
+}
+
+function checkPasswordStrength() {
+  const pw = document.getElementById('new_password').value;
+  const bar = document.getElementById('passwordStrengthBar');
+  const hint = document.getElementById('passwordHint');
+  
+  if (!pw) {
+    bar.className = 'password-strength-fill';
+    hint.textContent = 'Angalau herufi 6';
+    hint.className = 'password-hint';
+    return;
+  }
+  
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  
+  if (score <= 2) {
+    bar.className = 'password-strength-fill weak';
+    hint.textContent = 'Dhaifu — ongeza herufi, namba, au alama';
+    hint.className = 'password-hint error';
+  } else if (score <= 3) {
+    bar.className = 'password-strength-fill medium';
+    hint.textContent = 'Nzuri — lakini inaweza kuwa na nguvu zaidi';
+    hint.className = 'password-hint';
+  } else {
+    bar.className = 'password-strength-fill strong';
+    hint.textContent = 'Nguvu sana! 💪';
+    hint.className = 'password-hint success';
+  }
+}
+
+function checkPasswordMatch() {
+  const pw = document.getElementById('new_password').value;
+  const cpw = document.getElementById('confirm_password').value;
+  const hint = document.getElementById('confirmHint');
+  
+  if (!cpw) {
+    hint.textContent = '';
+    hint.className = 'password-hint';
+    return;
+  }
+  
+  if (pw === cpw) {
+    hint.textContent = '✓ Password zinalingana';
+    hint.className = 'password-hint success';
+  } else {
+    hint.textContent = '✗ Password hazilingana';
+    hint.className = 'password-hint error';
+  }
+}
+
+async function updatePassword() {
+  const pw = document.getElementById('new_password').value;
+  const cpw = document.getElementById('confirm_password').value;
+  
+  if (!pw || pw.length < 6) {
+    toast('Password iwe angalau herufi 6', 'error');
+    return;
+  }
+  
+  if (pw !== cpw) {
+    toast('Password hazilingani', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('setPasswordBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  
+  try {
+    const { data, error } = await db.auth.updateUser({ password: pw });
+    if (error) throw error;
+    
+    console.log('✅ Password updated:', data);
+    toast('✅ Password imebadilishwa!', 'success');
+    
+    document.getElementById('setPasswordContent').innerHTML = `
+      <div class="recovery-success">
+        <i class="fas fa-check-circle"></i>
+        <h2>Password Imebadilishwa!</h2>
+        <p class="sub">Sasa unaweza kuingia kwa password yako mpya.</p>
+        <button class="btn-confirm" onclick="closeM('setPasswordModal'); openAuth();" style="width:100%; padding:1rem; margin-top:1rem;">
+          <i class="fas fa-sign-in-alt"></i> Sign In Sasa
+        </button>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      closeM('setPasswordModal');
+    }, 5000);
+    
+  } catch (err) {
+    console.error('Update password error:', err);
+    toast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> Save Password';
   }
 }
 
@@ -1186,19 +1347,64 @@ function closeMyOrders() {
 }
 
 // ============================================
-// ADMIN PANEL
+// ADMIN: ROLE CHECK (TABAKA #1)
 // ============================================
 async function checkAdminRole() {
-  if (!currentUser) { isAdmin = false; return; }
-  const { data, error } = await db.from('user_profiles').select('role').eq('id', currentUser.id).single();
-  console.log('🔍 Admin check:', data, error);
-  isAdmin = data && data.role === 'admin';
-  console.log('🔍 isAdmin:', isAdmin);
-  const adminBtn = document.getElementById('adminMenuBtn');
-  if (adminBtn) adminBtn.style.display = isAdmin ? 'flex' : 'none';
+  if (!currentUser) { 
+    isAdmin = false; 
+    updateAdminUI();
+    return; 
+  }
+  
+  try {
+    const { data, error } = await db
+      .from('user_profiles')
+      .select('role')
+      .eq('id', currentUser.id)
+      .single();
+    
+    console.log('🔍 Admin check for', currentUser.email, ':', data);
+    
+    isAdmin = data && data.role === 'admin';
+    console.log('🔍 isAdmin:', isAdmin);
+    
+  } catch (err) {
+    console.error('Admin check error:', err);
+    isAdmin = false;
+  }
+  
+  updateAdminUI();
 }
 
+// ✅ ULINZI: Update UI kulingana na role
+function updateAdminUI() {
+  const adminBtn = document.getElementById('adminMenuBtn');
+  const adminPage = document.getElementById('page-admin');
+  
+  if (isAdmin) {
+    // ✅ Onyesha kwa admin
+    if (adminBtn) adminBtn.style.display = 'flex';
+  } else {
+    // ✅ Ficha kwa wasio admin
+    if (adminBtn) adminBtn.style.display = 'none';
+    if (adminPage) {
+      adminPage.style.display = 'none';
+      // Rudisha kwenye products
+      const productsContainer = document.getElementById('products');
+      if (productsContainer) productsContainer.style.display = 'block';
+      const hero = document.querySelector('.hero');
+      if (hero) hero.style.display = 'block';
+    }
+  }
+}
+
+// ============================================
+// ADMIN: OPEN / CLOSE
+// ============================================
 function openAdmin() {
+  // ✅ ULINZI: Kama si admin, kataa
+  if (!requireAdmin()) return;
+  
   document.getElementById('userMenu').classList.remove('show');
   document.getElementById('page-admin').style.display = 'block';
   const productsContainer = document.getElementById('products');
@@ -1218,6 +1424,7 @@ function closeAdmin() {
 }
 
 function switchAdminTab(tab, btn) {
+  if (!requireAdmin()) return;
   document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
@@ -1228,10 +1435,17 @@ function switchAdminTab(tab, btn) {
 }
 
 async function loadAdminData() {
+  if (!requireAdmin()) return;
   await Promise.all([loadAdminProducts(), loadAdminOrders()]);
 }
 
+// ============================================
+// ADMIN: PRODUCTS
+// ============================================
 async function loadAdminProducts() {
+  // ✅ ULINZI
+  if (!requireAdmin()) return;
+  
   const tbody = document.getElementById('adminProductsTable');
   try {
     const { data } = await db.from('products').select('*').order('created_at', { ascending: false });
@@ -1258,7 +1472,13 @@ async function loadAdminProducts() {
   }
 }
 
+// ============================================
+// ADMIN: ORDERS
+// ============================================
 async function loadAdminOrders() {
+  // ✅ ULINZI
+  if (!requireAdmin()) return;
+  
   const tbody = document.getElementById('adminOrdersTable');
   try {
     const { data } = await db.from('orders').select('*').order('created_at', { ascending: false });
@@ -1293,9 +1513,12 @@ async function loadAdminOrders() {
 }
 
 // ============================================
-// ANALYTICS
+// ADMIN: ANALYTICS
 // ============================================
 async function loadAnalytics() {
+  // ✅ ULINZI
+  if (!requireAdmin()) return;
+  
   const content = document.getElementById('analyticsContent');
   if (!content) return;
 
@@ -1395,14 +1618,24 @@ async function loadAnalytics() {
   }
 }
 
+// ============================================
+// ADMIN: VIEW ORDER ITEMS
+// ============================================
 async function viewOrderItems(orderId) {
+  if (!requireAdmin()) return;
+  
   const { data } = await db.from('order_items').select('*').eq('order_id', orderId);
   if (!data || data.length === 0) { toast('No items found', 'info'); return; }
   const list = data.map(i => `• ${i.product_name} × ${i.quantity} = ${fmtPrice(i.price * i.quantity)}`).join('\n');
   alert(`Order #${orderId} items:\n\n${list}`);
 }
 
+// ============================================
+// ADMIN: PRODUCT MODAL
+// ============================================
 function openAdminProduct() {
+  if (!requireAdmin()) return;
+  
   document.getElementById('ap_id').value = '';
   document.getElementById('ap_name').value = '';
   document.getElementById('ap_desc').value = '';
@@ -1423,6 +1656,8 @@ function openAdminProduct() {
 }
 
 async function editAdminProduct(id) {
+  if (!requireAdmin()) return;
+  
   const { data: p } = await db.from('products').select('*').eq('id', id).single();
   if (!p) return;
 
@@ -1446,6 +1681,8 @@ async function editAdminProduct(id) {
 }
 
 async function saveAdminProduct() {
+  if (!requireAdmin()) return;
+  
   const id = document.getElementById('ap_id').value;
   let imageUrl = document.getElementById('ap_image').value.trim() || null;
 
@@ -1511,6 +1748,8 @@ async function saveAdminProduct() {
 }
 
 async function deleteAdminProduct(id) {
+  if (!requireAdmin()) return;
+  
   if (!confirm('Delete this product?')) return;
   const { error } = await db.from('products').delete().eq('id', id);
   if (error) return toast(error.message, 'error');
@@ -1519,7 +1758,12 @@ async function deleteAdminProduct(id) {
   await loadData();
 }
 
+// ============================================
+// ADMIN: UPDATE ORDER STATUS
+// ============================================
 async function updateOrderStatus(orderId, status) {
+  if (!requireAdmin()) return;
+  
   const { error } = await db.from('orders').update({ status }).eq('id', orderId);
   if (error) return toast(error.message, 'error');
   toast('Order updated', 'success');
