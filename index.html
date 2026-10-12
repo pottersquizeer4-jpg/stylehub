@@ -85,6 +85,44 @@
     .timeline-step.done .timeline-label, .timeline-step.current .timeline-label { color: #171717; }
 
     /* ============================================
+       AWAMU 1: FORGOT PASSWORD
+       ============================================ */
+    .password-strength {
+      height: 4px;
+      background: var(--gray-200);
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .password-strength-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: all 0.3s;
+      width: 0%;
+    }
+    .password-strength-fill.weak { width: 33%; background: #ef4444; }
+    .password-strength-fill.medium { width: 66%; background: #f59e0b; }
+    .password-strength-fill.strong { width: 100%; background: #10b981; }
+    
+    .password-hint {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      margin-top: 0.35rem;
+    }
+    .password-hint.success { color: #10b981; font-weight: 600; }
+    .password-hint.error { color: #ef4444; font-weight: 600; }
+    
+    .recovery-success {
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+    .recovery-success i {
+      font-size: 3rem;
+      color: #10b981;
+      margin-bottom: 1rem;
+    }
+
+    /* ============================================
        AWAMU 2: COUPONS
        ============================================ */
     .coupon-box {
@@ -590,7 +628,6 @@
       <div class="form-group"><label>Phone *</label><input type="tel" id="c_phone"></div>
       <div class="form-group"><label>Shipping Address *</label><textarea id="c_address"></textarea></div>
       
-      <!-- AWAMU 2: SHIPPING ZONE -->
       <div class="form-group">
         <label>Shipping Zone *</label>
         <select id="c_shipping" onchange="updateShippingZone()">
@@ -598,7 +635,6 @@
         </select>
       </div>
       
-      <!-- AWAMU 2: COUPON -->
       <div class="coupon-box" id="couponBox">
         <div class="coupon-header">🎟️ Have a coupon code?</div>
         <div class="coupon-input-row" id="couponInputRow">
@@ -608,7 +644,6 @@
         <div id="couponSuccess" style="display:none;"></div>
       </div>
       
-      <!-- AWAMU 2: PRICE BREAKDOWN -->
       <div class="price-breakdown">
         <div class="price-row">
           <span>Subtotal</span>
@@ -696,6 +731,37 @@
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeM('resetPasswordModal')">Cancel</button>
         <button class="btn-confirm" id="resetPasswordBtn" onclick="sendPasswordReset()">Send Reset Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SET NEW PASSWORD MODAL (FORGOT PASSWORD RECOVERY) -->
+  <div class="modal-overlay" id="setPasswordModal">
+    <div class="modal" style="max-width:450px;">
+      <div id="setPasswordContent">
+        <h2>Set New Password</h2>
+        <p class="sub">Weka password mpya kwa akaunti yako.</p>
+        
+        <div class="form-group">
+          <label>New Password *</label>
+          <input type="password" id="new_password" placeholder="At least 6 characters" oninput="checkPasswordStrength()">
+          <div class="password-strength">
+            <div class="password-strength-fill" id="passwordStrengthBar"></div>
+          </div>
+          <div class="password-hint" id="passwordHint">Angalau herufi 6</div>
+        </div>
+        
+        <div class="form-group">
+          <label>Confirm Password *</label>
+          <input type="password" id="confirm_password" placeholder="Rudia password" oninput="checkPasswordMatch()">
+          <div class="password-hint" id="confirmHint"></div>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="btn-confirm" id="setPasswordBtn" onclick="updatePassword()">
+            <i class="fas fa-save"></i> Save Password
+          </button>
+        </div>
       </div>
     </div>
   </div>
