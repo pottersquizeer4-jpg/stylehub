@@ -37,6 +37,10 @@ let editingVariants = [];
 let currentSlide = 0;
 let slideInterval = null;
 
+// ✅ AWAMU 6: PAGINATION STATE
+let currentPage = 1;
+const itemsPerPage = 12;
+
 // ============================================
 // HELPERS
 // ============================================
@@ -139,12 +143,38 @@ async function loadData() {
     if (error) throw error;
     allProducts = prods || [];
     renderProducts();
+    
+    // ✅ AWAMU 7: Jaza dropdown za Size na Color
+    populateFilterDropdowns();
+    
     console.log('✅ Loaded', allProducts.length, 'products with variants');
   } catch (err) {
     console.error('Load error:', err);
     document.getElementById('productsGrid').innerHTML =
       '<div class="loading" style="color:#ef4444;"><i class="fas fa-exclamation-circle"></i> Error: ' + esc(err.message) + '</div>';
   }
+}
+
+// ✅ AWAMU 7: Jaza Dropdown za Size na Color
+function populateFilterDropdowns() {
+  const sizes = new Set();
+  const colors = new Set();
+
+  allProducts.forEach(p => {
+    (p.product_variants || []).forEach(v => {
+      if (v.size) sizes.add(v.size);
+      if (v.color) colors.add(v.color);
+    });
+  });
+
+  const sizeSelect = document.getElementById('filterSize');
+  const colorSelect = document.getElementById('filterColor');
+
+  sizeSelect.innerHTML = '<option value="">All Sizes</option>' + 
+    [...sizes].sort().map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+  colorSelect.innerHTML = '<option value="">All Colors</option>' + 
+    [...colors].sort().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 }
 
 function renderCategories() {
@@ -157,13 +187,14 @@ function renderCategories() {
       f.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeCategory = btn.dataset.cat;
+      currentPage = 1; // Reset to page 1 on filter
       renderProducts();
     };
   });
 }
 
 // ============================================
-// RENDER PRODUCTS
+// RENDER PRODUCTS (NA PAGINATION & FILTERS)
 // ============================================
 function renderProducts() {
   const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
@@ -171,17 +202,38 @@ function renderProducts() {
   const maxP = parseFloat(document.getElementById('maxPrice').value) || Infinity;
   const sortBy = document.getElementById('sortBy').value;
   const minR = parseFloat(document.getElementById('minRating').value) || 0;
+  
+  // ✅ AWAMU 7: Soma Filters mpya
+  const filterSize = document.getElementById('filterSize').value;
+  const filterColor = document.getElementById('filterColor').value;
+
   const grid = document.getElementById('productsGrid');
 
+  // 1. Pata bidhaa zote kulingana na filter
   let list = allProducts.filter(p => {
     if (q && !p.name.toLowerCase().includes(q)) return false;
     if (activeCategory && String(p.category_id) !== activeCategory) return false;
     if (p.price < minP) return false;
     if (p.price > maxP) return false;
     if ((p.rating || 0) < minR) return false;
+    
+    // ✅ AWAMU 7: Logic ya Size & Color
+    if (filterSize || filterColor) {
+      const variants = p.product_variants || [];
+      const hasMatchingVariant = variants.some(v => 
+        (!filterSize || v.size === filterSize) && 
+        (!filterColor || v.color === filterColor) &&
+        v.stock > 0 // Lazima iwe iko stock
+      );
+      
+      // Kama haina variant inayolingana, usionyeshe
+      if (!hasMatchingVariant) return false;
+    }
+
     return true;
   });
 
+  // 2. Panga (Sort)
   if (sortBy === 'price-low') list.sort((a, b) => a.price - b.price);
   else if (sortBy === 'price-high') list.sort((a, b) => b.price - a.price);
   else if (sortBy === 'rating') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -189,12 +241,26 @@ function renderProducts() {
 
   document.getElementById('resultCount').textContent = list.length + ' products';
 
+  // 3. ✅ AWAMU 6: Hesabu Kurasa (Pagination logic)
+  const totalPages = Math.ceil(list.length / itemsPerPage);
+  
+  // Hakikisha currentPage haizidi totalPages
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  // Chukua bidhaa za ukurasa huu tu
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedList = list.slice(startIndex, endIndex);
+
+  // 4. Onyesha bidhaa
   if (list.length === 0) {
     grid.innerHTML = '<div class="loading"><i class="fas fa-search"></i> No products found</div>';
+    document.getElementById('paginationContainer').style.display = 'none';
     return;
   }
 
-  grid.innerHTML = list.map(p => {
+  grid.innerHTML = paginatedList.map(p => {
     let totalStock = p.stock;
     if (p.product_variants && p.product_variants.length > 0) {
       totalStock = p.product_variants.reduce((sum, v) => sum + v.stock, 0);
@@ -225,6 +291,39 @@ function renderProducts() {
       </div>
     </div>
   `}).join('');
+
+  // 5. ✅ AWAMU 6: Update Vitufe vya Kurasa
+  updatePaginationUI(totalPages, list.length);
+}
+
+// ✅ AWAMU 6: Function ya Kubadilisha Ukurasa
+function changePage(direction) {
+  currentPage += direction;
+  renderProducts();
+  // Scrolling kwenda juu kidogo ili mteja aanze kuona bidhaa mpya
+  document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ✅ AWAMU 6: Function ya Ku-update UI ya Kurasa
+function updatePaginationUI(totalPages, totalItems) {
+  const container = document.getElementById('paginationContainer');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  const pageInfo = document.getElementById('pageInfo');
+
+  if (totalItems <= itemsPerPage) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+
+  // Weka maandishi (Mfano: Ukurasa 1 kati ya 3)
+  pageInfo.textContent = `Ukurasa ${currentPage} kati ya ${totalPages}`;
+
+  // Zima/kufungua vitufe
+  prevBtn.disabled = currentPage === 1;
+  nextBtn.disabled = currentPage === totalPages;
 }
 
 function clearFilters() {
@@ -233,9 +332,15 @@ function clearFilters() {
   document.getElementById('maxPrice').value = '';
   document.getElementById('sortBy').value = 'newest';
   document.getElementById('minRating').value = '0';
+  
+  // ✅ AWAMU 7: Reset Size na Color
+  document.getElementById('filterSize').value = '';
+  document.getElementById('filterColor').value = '';
+
   document.getElementById('filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('filters').querySelector('[data-cat=""]').classList.add('active');
   activeCategory = '';
+  currentPage = 1; // Reset page
   renderProducts();
 }
 
@@ -277,6 +382,7 @@ function handleSearchInput() {
 function selectSuggestion(productId) {
   document.getElementById('searchSuggestions').classList.remove('show');
   document.getElementById('searchInput').value = '';
+  currentPage = 1; // Reset page
   renderProducts();
   openProduct(productId);
 }
@@ -1572,7 +1678,12 @@ async function openMyOrders() {
               `).join('')}
             </div>
           ` : ''}
-          <div style="font-size:1.1rem; font-weight:800; color:var(--primary); text-align:right; margin-top:0.5rem;">${fmtPrice(o.total_amount)}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+            <div style="font-size:1.1rem; font-weight:800; color:var(--primary);">${fmtPrice(o.total_amount)}</div>
+            <button onclick="openReceipt(${o.id})" style="background:#c9a227; color:#0f0f0f; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.8rem;">
+              <i class="fas fa-receipt"></i> Receipt
+            </button>
+          </div>
         </div>
       `;
     }).join('');
@@ -1584,6 +1695,144 @@ async function openMyOrders() {
 
 function closeMyOrders() {
   document.getElementById('ordersModal').classList.remove('show');
+}
+
+// ============================================
+// AWAMU 9: RECEIPT / PRINT
+// ============================================
+async function openReceipt(orderId) {
+  if (!currentUser) return;
+  
+  document.getElementById('receiptModal').classList.add('show');
+  const content = document.getElementById('receiptContent');
+  content.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading receipt...</div>';
+
+  try {
+    // 1. Pata Oda
+    const { data: order, error } = await db
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+    if (error) throw error;
+
+    // 2. Pata Items za Oda
+    const { data: items } = await db
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+
+    // 3. Tengeneza Risiti
+    const itemsHTML = (items || []).map(item => `
+      <tr>
+        <td style="padding:0.5rem 0; border-bottom:1px solid #e5e5e3;">${esc(item.product_name)}<br><span style="font-size:0.75rem; color:#888;">${item.size ? 'Size: ' + esc(item.size) : ''} ${item.color ? ' | Color: ' + esc(item.color) : ''}</span></td>
+        <td style="padding:0.5rem 0; border-bottom:1px solid #e5e5e3; text-align:center;">${item.quantity}</td>
+        <td style="padding:0.5rem 0; border-bottom:1px solid #e5e5e3; text-align:right;">${fmtPrice(item.price * item.quantity)}</td>
+      </tr>
+    `).join('');
+
+    const discountRow = order.discount_amount > 0 ? `
+      <tr>
+        <td colspan="2" style="padding:0.5rem 0; text-align:right; color:#065f46;">Discount ${order.coupon_code ? '(' + order.coupon_code + ')' : ''}:</td>
+        <td style="padding:0.5rem 0; text-align:right; color:#065f46;">-${fmtPrice(order.discount_amount)}</td>
+      </tr>
+    ` : '';
+
+    content.innerHTML = `
+      <div style="font-family: 'Inter', sans-serif; color: #171717; padding: 1rem;" id="receiptPrintArea">
+        <!-- Header -->
+        <div style="text-align:center; border-bottom: 2px dashed #ccc; padding-bottom: 1rem; margin-bottom: 1rem;">
+          <div style="font-size: 1.5rem; font-weight: 800; color: #c9a227;">
+            <i class="fas fa-shopping-bag"></i> StyleHub
+          </div>
+          <div style="font-size: 0.85rem; color: #666;">Fashion Store · Dar es Salaam</div>
+          <div style="font-size: 0.85rem; color: #666;">Simu: +255 700 000 000</div>
+        </div>
+
+        <!-- Order Info -->
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom: 1rem;">
+          <div>
+            <strong>Order #${order.id}</strong><br>
+            ${new Date(order.created_at).toLocaleString('en-GB')}
+          </div>
+          <div style="text-align:right;">
+            <strong>${esc(order.customer_name)}</strong><br>
+            ${esc(order.customer_phone)}<br>
+            ${esc(order.customer_email)}
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div style="font-size: 0.85rem; margin-bottom: 1rem; padding: 0.5rem; background:#f7f7f5; border-radius: 6px;">
+          <strong>Anwani:</strong> ${esc(order.shipping_address)}<br>
+          <strong>Shipping:</strong> ${esc(order.shipping_zone || '—')}
+        </div>
+
+        <!-- Items -->
+        <table style="width:100%; font-size:0.85rem; border-collapse: collapse; margin-bottom: 1rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid #c9a227;">
+              <th style="text-align:left; padding:0.5rem 0;">Bidhaa</th>
+              <th style="text-align:center; padding:0.5rem 0;">Idadi</th>
+              <th style="text-align:right; padding:0.5rem 0;">Bei</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHTML}
+          </tbody>
+        </table>
+
+        <!-- Totals -->
+        <table style="width:100%; font-size:0.9rem; margin-top:1rem;">
+          <tr>
+            <td style="text-align:right; padding:0.25rem 0;">Subtotal:</td>
+            <td style="text-align:right; padding:0.25rem 0; width:100px;">${fmtPrice(order.total_amount + (order.discount_amount || 0) - (order.shipping_fee || 0))}</td>
+          </tr>
+          ${discountRow}
+          <tr>
+            <td style="text-align:right; padding:0.25rem 0;">Shipping:</td>
+            <td style="text-align:right; padding:0.25rem 0;">${fmtPrice(order.shipping_fee)}</td>
+          </tr>
+          <tr style="border-top: 2px solid #171717;">
+            <td style="text-align:right; padding:0.5rem 0; font-weight:800; font-size:1.1rem;">TOTAL:</td>
+            <td style="text-align:right; padding:0.5rem 0; font-weight:800; font-size:1.1rem; color:#c9a227;">${fmtPrice(order.total_amount)}</td>
+          </tr>
+        </table>
+
+        <!-- Footer -->
+        <div style="text-align:center; font-size:0.75rem; color:#888; margin-top: 2rem; border-top: 2px dashed #ccc; padding-top: 1rem;">
+          Asante kwa kununua StyleHub!<br>
+          Bidhaa zote zinaweza kurudishwa ndani ya siku 7.<br>
+          <strong>Payment: ${order.payment_method === 'cod' ? 'Cash on Delivery' : 'M-Pesa'}</strong>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
+    content.innerHTML = '<p style="color:#ef4444;">Error loading receipt: ' + err.message + '</p>';
+  }
+}
+
+function printReceipt() {
+  const printContents = document.getElementById('receiptPrintArea').innerHTML;
+  const originalContents = document.body.innerHTML;
+
+  // CSS maalum kwa ajili ya kuchapisha
+  const printStyles = `
+    <style>
+      @media print {
+        body * { visibility: hidden; }
+        #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
+        #receiptPrintArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+        .no-print { display: none !important; }
+      }
+    </style>
+  `;
+
+  document.body.innerHTML = printStyles + '<div id="receiptPrintArea">' + printContents + '</div>';
+  window.print();
+  document.body.innerHTML = originalContents;
+  window.location.reload(); // Reload ili kurudisha JS na CSS
 }
 
 // ============================================
@@ -1679,7 +1928,7 @@ async function loadAdminData() {
 }
 
 // ============================================
-// ADMIN: PRODUCTS
+// ADMIN: PRODUCTS (NA LOW STOCK ALERT)
 // ============================================
 async function loadAdminProducts() {
   if (!requireAdmin()) return;
@@ -1695,18 +1944,38 @@ async function loadAdminProducts() {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">No products</td></tr>';
       return;
     }
+
+    let lowStockCount = 0;
+
     tbody.innerHTML = data.map(p => {
       let totalStock = p.stock;
       if (p.product_variants && p.product_variants.length > 0) {
         totalStock = p.product_variants.reduce((sum, v) => sum + v.stock, 0);
       }
 
+      // ✅ AWAMU 5: Hesabu bidhaa zenye stock chini ya 5
+      if (totalStock > 0 && totalStock < 5) {
+        lowStockCount++;
+      }
+
+      // ✅ AWAMU 5: Badilisha rangi kuwa nyekundu kama stock < 5
+      const stockStyle = (totalStock > 0 && totalStock < 5) 
+        ? 'color: #ef4444; font-weight: 800; background: #fee2e2; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-block;' 
+        : '';
+        
+      // ✅ Ikiwa imeisha kabisa
+      const isOut = totalStock === 0;
+
       return `
       <tr>
         <td><img src="${esc(p.image_url || 'https://via.placeholder.com/40')}" onerror="this.src='https://via.placeholder.com/40'"></td>
         <td><strong>${esc(p.name)}</strong></td>
         <td>${fmtPrice(p.price)}</td>
-        <td>${totalStock}</td>
+        <td>
+          <span style="${stockStyle}">
+            ${totalStock} ${isOut ? '❌' : ''}
+          </span>
+        </td>
         <td>${(p.rating || 0).toFixed(1)} ⭐</td>
         <td>
           <button onclick="editAdminProduct(${p.id})" style="background:#3b82f6;color:white;border:none;padding:0.35rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.75rem;margin-right:0.3rem;"><i class="fas fa-pen"></i></button>
@@ -1714,6 +1983,18 @@ async function loadAdminProducts() {
         </td>
       </tr>
     `}).join('');
+
+    // ✅ AWAMU 5: Onyesha Alert juu ya table kama kuna bidhaa zinazoisha
+    const alertBox = document.getElementById('lowStockAlert');
+    if (alertBox) {
+      if (lowStockCount > 0) {
+        alertBox.style.display = 'flex';
+        document.getElementById('lowStockCount').textContent = lowStockCount;
+      } else {
+        alertBox.style.display = 'none';
+      }
+    }
+
   } catch (err) {
     console.error(err);
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</td></tr>';
@@ -1760,7 +2041,7 @@ async function loadAdminOrders() {
 }
 
 // ============================================
-// ADMIN: ANALYTICS
+// ADMIN: ANALYTICS (NA LOW STOCK)
 // ============================================
 async function loadAnalytics() {
   if (!requireAdmin()) return;
@@ -1772,7 +2053,7 @@ async function loadAnalytics() {
 
   try {
     const { data: orders } = await db.from('orders').select('*');
-    const { data: products } = await db.from('products').select('*');
+    const { data: products } = await db.from('products').select(`*, product_variants(stock)`);
     const { data: orderItems } = await db.from('order_items').select('*');
     const { data: users } = await db.from('user_profiles').select('*');
 
@@ -1783,6 +2064,18 @@ async function loadAnalytics() {
     const totalProducts = products ? products.length : 0;
     const totalUsers = users ? users.length : 0;
     const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // ✅ AWAMU 5: Hesabu bidhaa zenye stock chini ya 5
+    let lowStockCount = 0;
+    (products || []).forEach(p => {
+      let totalStock = p.stock;
+      if (p.product_variants && p.product_variants.length > 0) {
+        totalStock = p.product_variants.reduce((sum, v) => sum + v.stock, 0);
+      }
+      if (totalStock > 0 && totalStock < 5) {
+        lowStockCount++;
+      }
+    });
 
     const productSales = {};
     (orderItems || []).forEach(item => {
@@ -1823,6 +2116,11 @@ async function loadAnalytics() {
           <div class="label">Customers</div>
           <div class="value">${totalUsers}</div>
           <div class="sub">Waliojisajili</div>
+        </div>
+        <div class="analytics-card" style="border-left: 4px solid #ef4444;">
+          <div class="label" style="color:#ef4444;">Low Stock ⚠️</div>
+          <div class="value" id="analyticsLowStock" style="color:#ef4444;">${lowStockCount}</div>
+          <div class="sub">Bidhaa zinazokaribia kuisha</div>
         </div>
       </div>
 
@@ -2591,11 +2889,9 @@ async function loadAdminCustomers() {
         (o.customer_email && o.customer_email === u.email)
       );
       
-      // Hesabu orders zote (sio tu paid/delivered)
       const totalSpent = userOrders.reduce((s, o) => s + (parseFloat(o.total_amount) || 0), 0);
       const orderCount = userOrders.length;
       
-      // Pata email: kutoka user_profiles, au orders, au '—'
       let email = u.email;
       if (!email && userOrders.length > 0) {
         email = userOrders[0].customer_email;
@@ -2633,6 +2929,75 @@ async function loadAdminCustomers() {
   } catch (err) {
     console.error('Load customers error:', err);
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</td></tr>';
+  }
+}
+
+// ============================================
+// AWAMU 8: EXPORT REPORTS TO CSV
+// ============================================
+async function exportReportToCSV() {
+  if (!requireAdmin()) return;
+
+  const btn = event.target.closest('button');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+
+  try {
+    const ym = getReportMonth();
+    const [year, month] = ym.split('-').map(Number);
+    const start = new Date(year, month - 1, 1).toISOString();
+    const end = new Date(year, month, 1).toISOString();
+
+    // 1. Pata Data kutoka Supabase
+    const { data: monthOrders } = await db.from('orders')
+      .select('*')
+      .gte('created_at', start)
+      .lt('created_at', end);
+
+    const orderIds = monthOrders ? monthOrders.map(o => o.id) : [];
+    let orderItems = [];
+    if (orderIds.length > 0) {
+      const { data: oi } = await db.from('order_items').select('*').in('order_id', orderIds);
+      orderItems = oi || [];
+    }
+
+    // 2. Tengeneza Mistari ya CSV (Headers)
+    let csvContent = "Order ID,Customer Name,Customer Email,Phone,Date,Total (TZS),Status,Product,Qty,Price (TZS)\n";
+
+    // 3. Jaza Data
+    (monthOrders || []).forEach(order => {
+      const itemsForOrder = orderItems.filter(i => i.order_id === order.id);
+      
+      if (itemsForOrder.length === 0) {
+        // Kama oda haina items (labda imefutwa)
+        csvContent += `"${order.id}","${order.customer_name}","${order.customer_email}","${order.customer_phone}","${new Date(order.created_at).toLocaleDateString('en-GB')}","${order.total_amount}","${order.status}","-","-","-"\n`;
+      } else {
+        // Kama ina items, rudia oda kwa kila item
+        itemsForOrder.forEach(item => {
+          csvContent += `"${order.id}","${order.customer_name}","${order.customer_email}","${order.customer_phone}","${new Date(order.created_at).toLocaleDateString('en-GB')}","${order.total_amount}","${order.status}","${item.product_name}","${item.quantity}","${item.price}"\n`;
+        });
+      }
+    });
+
+    // 4. Pakua Faili
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `StyleHub_Report_${ym}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast('✅ Ripoti imepakuliwa!', 'success');
+
+  } catch (err) {
+    console.error('Export error:', err);
+    toast('Error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
 }
 
