@@ -393,6 +393,62 @@
     body.dark .admin-table tbody tr:hover { background: #262626; }
     body.dark #reportMonth { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
 
+    /* ============================================
+       AWAMU 6: PAGINATION (KURASA)
+       ============================================ */
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 3rem;
+      margin-bottom: 2rem;
+    }
+    .page-btn {
+      background: white;
+      border: 1.5px solid var(--gray-200);
+      color: var(--gray-600);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .page-btn.active {
+      background: var(--primary);
+      color: var(--secondary);
+      border-color: var(--primary);
+    }
+    .page-btn:disabled {
+      background: var(--gray-100);
+      color: var(--gray-400);
+      cursor: not-allowed;
+    }
+    .page-info {
+      margin: 0 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+    body.dark .page-btn {
+      background: #171717;
+      border-color: #262626;
+      color: #a3a3a3;
+    }
+    body.dark .page-btn.active {
+      background: var(--primary);
+      color: var(--secondary);
+      border-color: var(--primary);
+    }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .header-inner { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
@@ -471,10 +527,13 @@
   <div class="container" id="products">
     <h2 class="section-title"><i class="fas fa-fire"></i> All Products</h2>
     <div class="filters" id="filters"><button class="filter-btn active" data-cat="">All</button></div>
+    
+    <!-- ✅ AWAMU 7: ADVANCED FILTER BAR (NA SIZE & COLOR) -->
     <div class="adv-filter-bar">
       <label>Price:</label>
       <input type="number" id="minPrice" placeholder="Min" style="width:90px;" oninput="renderProducts()">
       <input type="number" id="maxPrice" placeholder="Max" style="width:90px;" oninput="renderProducts()">
+      
       <label style="margin-left:0.5rem;">Sort:</label>
       <select id="sortBy" onchange="renderProducts()">
         <option value="newest">Newest</option>
@@ -483,16 +542,36 @@
         <option value="rating">Rating</option>
         <option value="name">Name (A-Z)</option>
       </select>
+
       <label style="margin-left:0.5rem;">Rating:</label>
       <select id="minRating" onchange="renderProducts()">
         <option value="0">All</option>
         <option value="4">4★ & up</option>
         <option value="4.5">4.5★ & up</option>
       </select>
+
+      <label style="margin-left:0.5rem;">Size:</label>
+      <select id="filterSize" onchange="renderProducts()">
+        <option value="">All Sizes</option>
+      </select>
+
+      <label style="margin-left:0.5rem;">Color:</label>
+      <select id="filterColor" onchange="renderProducts()">
+        <option value="">All Colors</option>
+      </select>
+
       <button class="clear-btn" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
       <span id="resultCount" style="margin-left:auto; font-size:0.82rem; color:var(--gray-600); font-weight:600;"></span>
     </div>
+    
     <div class="products-grid" id="productsGrid"><div class="loading"><i class="fas fa-spinner"></i> Loading products...</div></div>
+    
+    <!-- ✅ AWAMU 6: PAGINATION CONTROLS -->
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+      <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="page-info" id="pageInfo">Page 1 of 1</div>
+      <button class="page-btn" id="nextPageBtn" onclick="changePage(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
   </div>
 
   <!-- ADMIN PAGE -->
@@ -515,6 +594,16 @@
           <h3>All Products</h3>
           <button class="btn btn-primary" onclick="openAdminProduct()"><i class="fas fa-plus"></i> Add Product</button>
         </div>
+
+        <!-- ✅ AWAMU 5: LOW STOCK ALERT -->
+        <div id="lowStockAlert" style="display:none; background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; padding:1rem; border-radius:10px; margin-bottom:1rem; font-weight:600; display:flex; align-items:center; gap:0.75rem;">
+          <i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i>
+          <div>
+            <strong>Onyo la Stock!</strong> Una bidhaa <span id="lowStockCount">0</span> zinazokaribia kuisha (zilizobaki chini ya 5). 
+            <a href="#" onclick="event.preventDefault(); document.getElementById('adminProductsTable').scrollIntoView({behavior:'smooth'})" style="color:#991b1b; text-decoration:underline; margin-left:0.5rem;">Angalia chini 👇</a>
+          </div>
+        </div>
+
         <div class="card" style="padding: 0; overflow-x: auto;">
           <table class="admin-table">
             <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Rating</th><th>Actions</th></tr></thead>
@@ -568,7 +657,14 @@
       <div class="admin-tab" id="admin-reports">
         <div class="admin-header">
           <h3>Sales Reports</h3>
-          <input type="month" id="reportMonth" style="padding:0.5rem; border-radius:8px; border:1.5px solid #e5e5e3;" onchange="loadAdminReports()">
+          <div style="display:flex; gap:0.75rem; align-items:center;">
+            <input type="month" id="reportMonth" style="padding:0.5rem; border-radius:8px; border:1.5px solid #e5e5e3;" onchange="loadAdminReports()">
+            
+            <!-- ✅ AWAMU 8: EXPORT CSV BUTTON -->
+            <button class="btn btn-outline" onclick="exportReportToCSV()" title="Pakua ripoti hii kama Excel/CSV">
+              <i class="fas fa-file-csv"></i> Download CSV
+            </button>
+          </div>
         </div>
         <div class="stats">
           <div class="stat"><div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div><div><div class="stat-num" id="rpRevenue">—</div><div class="stat-label">Mapato (TZS)</div></div></div>
@@ -782,6 +878,23 @@
         <button class="close-cart" onclick="closeMyOrders()" style="font-size:1.5rem;">&times;</button>
       </div>
       <div id="ordersContent"><div class="loading"><i class="fas fa-spinner"></i> Loading orders...</div></div>
+    </div>
+  </div>
+
+  <!-- RECEIPT MODAL -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal" style="max-width:600px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;" class="no-print">
+        <h2><i class="fas fa-receipt"></i> Receipt</h2>
+        <button class="close-cart" onclick="closeM('receiptModal')" style="font-size:1.5rem;">&times;</button>
+      </div>
+      <div id="receiptContent">
+        <div class="loading"><i class="fas fa-spinner"></i> Loading receipt...</div>
+      </div>
+      <div class="modal-actions no-print" style="margin-top:1.5rem;">
+        <button class="btn-cancel" onclick="closeM('receiptModal')">Close</button>
+        <button class="btn-confirm" onclick="printReceipt()"><i class="fas fa-print"></i> Print</button>
+      </div>
     </div>
   </div>
 
