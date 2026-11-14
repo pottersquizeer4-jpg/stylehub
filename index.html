@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --primary: #c9a227; --primary-dark: #a8861e; --secondary: #0f0f0f; --gray-100: #f7f7f5; --gray-200: #e5e5e3; --gray-400: #a3a3a3; --gray-600: #525252; }
+    :root { --primary: #c9a227; --primary-dark: #a8861e; --secondary: #0f0f0f; --gray-100: #f7f7f5; --gray-200: #e5e5e3; --gray-400: #a3a3a3; --gray-600: #525252; --success: #10b981; --success-dark: #059669; --danger: #ef4444; --danger-dark: #dc2626; --warning: #f59e0b; --info: #3b82f6; --info-dark: #2563eb; }
     body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: #171717; }
 
     /* HEADER */
@@ -84,164 +84,76 @@
     .timeline-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-align: center; }
     .timeline-step.done .timeline-label, .timeline-step.current .timeline-label { color: #171717; }
 
-    /* ============================================
-       AWAMU 1: FORGOT PASSWORD
-       ============================================ */
-    .password-strength {
-      height: 4px;
-      background: var(--gray-200);
-      border-radius: 2px;
-      margin-top: 0.4rem;
-      overflow: hidden;
-    }
-    .password-strength-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: all 0.3s;
-      width: 0%;
-    }
+    /* AWAMU 1: FORGOT PASSWORD */
+    .password-strength { height: 4px; background: var(--gray-200); border-radius: 2px; margin-top: 0.4rem; overflow: hidden; }
+    .password-strength-fill { height: 100%; border-radius: 2px; transition: all 0.3s; width: 0%; }
     .password-strength-fill.weak { width: 33%; background: #ef4444; }
     .password-strength-fill.medium { width: 66%; background: #f59e0b; }
     .password-strength-fill.strong { width: 100%; background: #10b981; }
-    
-    .password-hint {
-      font-size: 0.75rem;
-      color: var(--gray-400);
-      margin-top: 0.35rem;
-    }
+    .password-hint { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.35rem; }
     .password-hint.success { color: #10b981; font-weight: 600; }
     .password-hint.error { color: #ef4444; font-weight: 600; }
-    
-    .recovery-success {
-      text-align: center;
-      padding: 1.5rem 0;
-    }
-    .recovery-success i {
-      font-size: 3rem;
-      color: #10b981;
-      margin-bottom: 1rem;
-    }
+    .recovery-success { text-align: center; padding: 1.5rem 0; }
+    .recovery-success i { font-size: 3rem; color: #10b981; margin-bottom: 1rem; }
 
-    /* ============================================
-       AWAMU 2: COUPONS
-       ============================================ */
-    .coupon-box {
-      background: #fef3c7;
-      border: 2px dashed #f59e0b;
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .coupon-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 800;
-      color: #92400e;
-      margin-bottom: 0.75rem;
-      font-size: 0.9rem;
-    }
-    .coupon-input-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .coupon-input-row input {
-      flex: 1;
-      padding: 0.65rem 0.9rem;
-      border: 1.5px solid #f59e0b;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      outline: none;
-      background: white;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .coupon-input-row input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
-    }
-    .coupon-apply-btn {
-      background: #f59e0b;
-      color: white;
-      border: none;
-      padding: 0.65rem 1.2rem;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.85rem;
-      transition: all 0.15s;
-    }
+    /* AWAMU 2: COUPONS */
+    .coupon-box { background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+    .coupon-header { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; color: #92400e; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    .coupon-input-row { display: flex; gap: 0.5rem; }
+    .coupon-input-row input { flex: 1; padding: 0.65rem 0.9rem; border: 1.5px solid #f59e0b; border-radius: 8px; font-family: inherit; font-size: 0.9rem; outline: none; background: white; text-transform: uppercase; font-weight: 600; }
+    .coupon-input-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15); }
+    .coupon-apply-btn { background: #f59e0b; color: white; border: none; padding: 0.65rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 0.85rem; transition: all 0.15s; }
     .coupon-apply-btn:hover { background: #d97706; }
     .coupon-apply-btn:disabled { background: #a3a3a3; cursor: not-allowed; }
-    
-    .coupon-applied {
-      background: #d1fae5;
-      border-color: #10b981;
-    }
+    .coupon-applied { background: #d1fae5; border-color: #10b981; }
     .coupon-applied .coupon-header { color: #065f46; }
-    
-    .coupon-success {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem;
-      background: white;
-      border-radius: 8px;
-      margin-top: 0.75rem;
-    }
-    .coupon-success-code {
-      font-weight: 800;
-      color: #065f46;
-      font-size: 1rem;
-    }
-    .coupon-success-desc {
-      font-size: 0.75rem;
-      color: #525252;
-      margin-top: 0.15rem;
-    }
-    .coupon-remove-btn {
-      background: #fee2e2;
-      color: #dc2626;
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
+    .coupon-success { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: white; border-radius: 8px; margin-top: 0.75rem; }
+    .coupon-success-code { font-weight: 800; color: #065f46; font-size: 1rem; }
+    .coupon-success-desc { font-size: 0.75rem; color: #525252; margin-top: 0.15rem; }
+    .coupon-remove-btn { background: #fee2e2; color: #dc2626; border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
     .coupon-remove-btn:hover { background: #fecaca; }
 
     /* AWAMU 2: PRICE BREAKDOWN */
-    .price-breakdown {
-      background: var(--gray-100);
-      border-radius: 10px;
-      padding: 0.9rem 1rem;
-      margin-bottom: 1rem;
-      font-size: 0.88rem;
-    }
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.35rem 0;
-      color: var(--gray-600);
-    }
+    .price-breakdown { background: var(--gray-100); border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 1rem; font-size: 0.88rem; }
+    .price-row { display: flex; justify-content: space-between; padding: 0.35rem 0; color: var(--gray-600); }
     .price-row.discount { color: #065f46; font-weight: 700; }
     .price-row.shipping { color: #1e40af; }
-    .price-row.total {
-      border-top: 2px solid var(--gray-200);
-      padding-top: 0.65rem;
-      margin-top: 0.5rem;
-      font-weight: 800;
-      font-size: 1.1rem;
-      color: var(--primary);
-    }
+    .price-row.total { border-top: 2px solid var(--gray-200); padding-top: 0.65rem; margin-top: 0.5rem; font-weight: 800; font-size: 1.1rem; color: var(--primary); }
+
+    /* AWAMU 2: PRODUCT IMAGE GALLERY */
+    .product-thumbnails { display: flex; gap: 0.5rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+    .product-thumbnails::-webkit-scrollbar { height: 6px; }
+    .product-thumbnails::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+    .product-thumbnail { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; flex-shrink: 0; background: var(--gray-100); }
+    .product-thumbnail:hover { border-color: var(--primary); transform: scale(1.05); }
+    .product-thumbnail.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.2); }
+    .image-upload-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
+    .image-preview-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--gray-100); }
+    .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .image-preview-remove { position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; }
+    .image-preview-remove:hover { background: #dc2626; }
+
+    /* AWAMU 3: PRODUCT VARIANTS */
+    .option-btn:disabled { background: var(--gray-100); color: var(--gray-400); cursor: not-allowed; text-decoration: line-through; opacity: 0.6; }
+    .variant-row { display: grid; grid-template-columns: 1fr 1fr 80px 40px; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+    .variant-row input { padding: 0.5rem; border: 1.5px solid var(--gray-200); border-radius: 6px; font-size: 0.85rem; font-family: inherit; }
+    .variant-row input:focus { border-color: var(--primary); outline: none; }
+    .variant-remove { background: #fee2e2; color: #dc2626; border: none; height: 100%; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .variant-remove:hover { background: #fecaca; }
+
+    /* AWAMU 3: ADMIN MANAGEMENT */
+    .btn-action { padding: 0.35rem 0.6rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .btn-action.edit { background: #3b82f6; color: white; }
+    .btn-action.edit:hover { background: #2563eb; }
+    .btn-action.delete { background: #ef4444; color: white; }
+    .btn-action.delete:hover { background: #dc2626; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-inactive { background: #fee2e2; color: #991b1b; }
 
     /* DARK MODE STYLES */
     body.dark { --gray-100: #0f0f0f; --gray-200: #262626; --gray-400: #737373; --gray-600: #a3a3a3; background: #0a0a0a; color: #f5f5f5; }
     body.dark .header, body.dark .product-card, body.dark .adv-filter-bar, body.dark .cart-sidebar, body.dark .modal, body.dark .user-menu, body.dark .analytics-card, body.dark .analytics-section, body.dark .admin-table th { background: #171717; border-color: #262626; color: #f5f5f5; }
-    body.dark .search-bar input, body.dark .form-group input, body.dark .form-group textarea, body.dark .adv-filter-bar select, body.dark .adv-filter-bar input, body.dark .review-form textarea { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
+    body.dark .search-bar input, body.dark .form-group input, body.dark .form-group textarea, body.dark .adv-filter-bar select, body.dark .adv-filter-bar input, body.dark .review-form textarea, body.dark .variant-row input { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
     body.dark .filter-btn, body.dark .option-btn, body.dark .qty-btn, body.dark .clear-btn { background: #171717; color: #a3a3a3; border-color: #262626; }
     body.dark .user-btn, body.dark .wishlist-btn-header, body.dark .dark-toggle-btn { background: #171717; color: #f5f5f5; border-color: #262626; }
     body.dark .user-menu-item:hover, body.dark .suggestion-item:hover, body.dark .review-form { background: #262626; }
@@ -253,14 +165,24 @@
     body.dark .price-row.total { border-top-color: #262626; }
     body.dark .coupon-success { background: #0f0f0f; }
     body.dark .coupon-success-desc { color: #a3a3a3; }
+    body.dark .image-preview-item { background: #262626; }
 
-    /* HERO */
-    .hero { background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%); color: white; padding: 4rem 2rem; text-align: center; }
-    .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; }
-    .hero h1 span { color: var(--primary); }
-    .hero p { font-size: 1.1rem; color: var(--gray-400); max-width: 600px; margin: 0 auto 2rem; }
-    .hero-btn { background: var(--primary); color: var(--secondary); border: none; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; }
-    .hero-btn:hover { background: var(--primary-dark); }
+    /* HERO SLIDER */
+    .hero { position: relative; height: 600px; overflow: hidden; background: var(--secondary); }
+    .hero-slides { position: relative; width: 100%; height: 100%; }
+    .hero-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s ease-in-out, transform 6s ease-in-out; transform: scale(1); display: flex; align-items: center; justify-content: center; }
+    .hero-slide.active { opacity: 1; transform: scale(1.05); z-index: 1; }
+    .hero-slide::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%); z-index: 1; }
+    .hero-content { position: relative; z-index: 2; text-align: center; color: white; padding: 0 1rem; max-width: 800px; transform: translateY(30px); opacity: 0; transition: all 0.8s ease-in-out 0.3s; }
+    .hero-slide.active .hero-content { transform: translateY(0); opacity: 1; }
+    .hero-content h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.2; }
+    .hero-content h1 span { color: var(--primary); }
+    .hero-content p { font-size: 1.2rem; color: #e2e8f0; max-width: 600px; margin: 0 auto 2rem; }
+    .hero-btn { background: var(--primary); color: var(--secondary); border: none; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+    .hero-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+    .hero-dots { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.75rem; z-index: 10; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s; }
+    .dot.active { background: var(--primary); transform: scale(1.3); }
 
     /* CONTAINER */
     .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
@@ -403,8 +325,8 @@
     /* ADMIN PANEL */
     .admin-tab { display: none; }
     .admin-tab.active { display: block; }
-    .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); }
-    .admin-nav button { background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; color: var(--gray-600); border-bottom: 2px solid transparent; }
+    .admin-nav { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--gray-200); overflow-x: auto; }
+    .admin-nav button { background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; color: var(--gray-600); border-bottom: 2px solid transparent; white-space: nowrap; }
     .admin-nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
     .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
     .admin-header h3 { font-size: 1.2rem; font-weight: 800; }
@@ -419,17 +341,78 @@
     .status-delivered { background: #d1fae5; color: #065f46; }
     .status-cancelled { background: #fee2e2; color: #991b1b; }
 
+    /* ============================================
+       AWAMU 4: ADMIN PANEL — COMPLETE STYLES
+       ============================================ */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: white; border: 1px solid var(--gray-200); border-radius: 14px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; transition: all 0.2s; }
+    .stat:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; color: white; }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+    .stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .stat-icon.amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-icon.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .stat-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .stat-num { font-size: 1.5rem; font-weight: 800; color: #171717; line-height: 1.2; }
+    .stat-label { font-size: 0.78rem; color: var(--gray-600); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.15rem; }
+    .card { background: white; border: 1px solid var(--gray-200); border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; }
+    .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--gray-100); }
+    .card-head h3 { font-size: 1.05rem; font-weight: 800; color: #171717; margin: 0; }
+    .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrap::-webkit-scrollbar { height: 6px; }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1.2rem; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background: var(--secondary); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary); color: var(--secondary); }
+    .btn-outline { background: white; color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.75rem; border-radius: 8px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--gray-200); }
+    .modal-head h2 { font-size: 1.3rem; font-weight: 800; margin: 0; }
+    .close-x { background: none; border: none; font-size: 1.5rem; color: var(--gray-400); cursor: pointer; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .close-x:hover { background: var(--gray-100); color: var(--danger); }
+    .modal-foot { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-200); }
+    .modal-foot .btn { min-width: 100px; }
+    .user-cell { display: flex; align-items: center; gap: 0.75rem; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; text-transform: uppercase; }
+    .user-cell .name { font-weight: 700; font-size: 0.9rem; color: #171717; }
+    .user-cell .email { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.1rem; }
+    #reportMonth { font-family: inherit; font-size: 0.9rem; font-weight: 600; outline: none; transition: all 0.15s; }
+    #reportMonth:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15); }
+    .admin-table tbody tr:hover { background: var(--gray-100); }
+    .admin-table td { vertical-align: middle; }
+    body.dark .stat, body.dark .card { background: #171717; border-color: #262626; }
+    body.dark .stat-num, body.dark .card-head h3, body.dark .user-cell .name { color: #f5f5f5; }
+    body.dark .card-head { border-bottom-color: #262626; }
+    body.dark .btn-outline { background: #171717; color: #a3a3a3; border-color: #262626; }
+    body.dark .btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    body.dark .modal-head { border-bottom-color: #262626; }
+    body.dark .modal-foot { border-top-color: #262626; }
+    body.dark .close-x:hover { background: #262626; }
+    body.dark .admin-table tbody tr:hover { background: #262626; }
+    body.dark #reportMonth { background: #0f0f0f; color: #f5f5f5; border-color: #262626; }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .header-inner { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
       .search-bar { order: 3; flex-basis: 100%; max-width: none; }
-      .hero h1 { font-size: 2rem; }
-      .hero { padding: 3rem 1.5rem; }
+      .hero-content h1 { font-size: 2.2rem; }
+      .hero-content p { font-size: 1rem; }
+      .hero { height: 450px; }
       .container { padding: 1.5rem 1rem; }
       .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
       .product-detail { grid-template-columns: 1fr; gap: 1.5rem; }
       .order-timeline::before { left: 15%; right: 15%; }
       .timeline-label { font-size: 0.6rem; }
+    }
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: 1fr; }
+      .stat { padding: 1rem; }
+      .stat-num { font-size: 1.25rem; }
+      .stat-icon { width: 42px; height: 42px; font-size: 1.1rem; }
+      .modal-foot { flex-direction: column-reverse; }
+      .modal-foot .btn { width: 100%; }
     }
   </style>
 </head>
@@ -444,27 +427,44 @@
         <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
       <div class="header-actions">
-        <button class="dark-toggle-btn" id="darkToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
-          <i class="fas fa-moon"></i>
-        </button>
-        <button class="wishlist-btn-header" onclick="openWishlist()" title="Wishlist">
-          <i class="fas fa-heart"></i>
-          <span class="wishlist-count" id="wishlistCount">0</span>
-        </button>
-        <button class="user-btn" id="userBtn" onclick="handleUserClick()">
-          <i class="fas fa-user" id="userIcon"></i>
-          <span id="userLabel">Sign In</span>
-        </button>
+        <button class="dark-toggle-btn" id="darkToggle" onclick="toggleDarkMode()" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+        <button class="wishlist-btn-header" onclick="openWishlist()" title="Wishlist"><i class="fas fa-heart"></i><span class="wishlist-count" id="wishlistCount">0</span></button>
+        <button class="user-btn" id="userBtn" onclick="handleUserClick()"><i class="fas fa-user" id="userIcon"></i><span id="userLabel">Sign In</span></button>
         <button class="cart-btn" onclick="toggleCart()"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span></button>
       </div>
     </div>
   </header>
 
-  <!-- HERO -->
+  <!-- HERO SLIDER -->
   <section class="hero">
-    <h1>Discover Your <span>Style</span></h1>
-    <p>Shop the latest fashion trends. Quality clothing, shoes, and accessories at unbeatable prices.</p>
-    <button class="hero-btn" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now <i class="fas fa-arrow-right"></i></button>
+    <div class="hero-slides">
+      <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80');">
+        <div class="hero-content">
+          <h1>Discover Your <span>Style</span></h1>
+          <p>Shop the latest fashion trends. Quality clothing, shoes, and accessories at unbeatable prices.</p>
+          <button class="hero-btn" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now <i class="fas fa-arrow-right"></i></button>
+        </div>
+      </div>
+      <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1600&q=80');">
+        <div class="hero-content">
+          <h1>New Summer <span>Collection</span></h1>
+          <p>Up to 50% OFF on selected items. Limited time offer!</p>
+          <button class="hero-btn" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Collection</button>
+        </div>
+      </div>
+      <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=80');">
+        <div class="hero-content">
+          <h1>Premium <span>Quality</span></h1>
+          <p>Experience the best quality fashion delivered right to your doorstep.</p>
+          <button class="hero-btn" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Explore Now</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-dots">
+      <span class="dot active" onclick="goToSlide(0)"></span>
+      <span class="dot" onclick="goToSlide(1)"></span>
+      <span class="dot" onclick="goToSlide(2)"></span>
+    </div>
   </section>
 
   <!-- MAIN -->
@@ -504,65 +504,108 @@
         <button class="active" onclick="switchAdminTab('products', this)">Products</button>
         <button onclick="switchAdminTab('orders', this)">Orders</button>
         <button onclick="switchAdminTab('analytics', this)">Analytics</button>
+        <button onclick="switchAdminTab('coupons', this)">Coupons</button>
+        <button onclick="switchAdminTab('shipping', this)">Shipping</button>
+        <button onclick="switchAdminTab('reports', this)">Reports</button>
+        <button onclick="switchAdminTab('customers', this)">Customers</button>
       </div>
 
       <div class="admin-tab active" id="admin-products">
         <div class="admin-header">
           <h3>All Products</h3>
-          <button class="btn btn-primary" onclick="openAdminProduct()">
-            <i class="fas fa-plus"></i> Add Product
-          </button>
+          <button class="btn btn-primary" onclick="openAdminProduct()"><i class="fas fa-plus"></i> Add Product</button>
         </div>
         <div class="card" style="padding: 0; overflow-x: auto;">
           <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Rating</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="adminProductsTable">
-              <tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr>
-            </tbody>
+            <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Rating</th><th>Actions</th></tr></thead>
+            <tbody id="adminProductsTable"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div class="admin-tab" id="admin-orders">
-        <div class="admin-header">
-          <h3>All Orders</h3>
-        </div>
+        <div class="admin-header"><h3>All Orders</h3></div>
         <div class="card" style="padding: 0; overflow-x: auto;">
           <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="adminOrdersTable">
-              <tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr>
-            </tbody>
+            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="adminOrdersTable"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div class="admin-tab" id="admin-analytics">
+        <div class="admin-header"><h3>Analytics Overview</h3></div>
+        <div id="analyticsContent"><div class="loading"><i class="fas fa-spinner"></i> Loading analytics...</div></div>
+      </div>
+
+      <div class="admin-tab" id="admin-coupons">
         <div class="admin-header">
-          <h3>Analytics Overview</h3>
+          <h3>Coupons</h3>
+          <button class="btn btn-primary" onclick="openAdminCoupon()"><i class="fas fa-plus"></i> Add Coupon</button>
         </div>
-        <div id="analyticsContent">
-          <div class="loading"><i class="fas fa-spinner"></i> Loading analytics...</div>
+        <div class="card" style="padding: 0; overflow-x: auto;">
+          <table class="admin-table">
+            <thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Uses</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="adminCouponsTable"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
+          </table>
         </div>
       </div>
+
+      <div class="admin-tab" id="admin-shipping">
+        <div class="admin-header">
+          <h3>Shipping Zones</h3>
+          <button class="btn btn-primary" onclick="openAdminShipping()"><i class="fas fa-plus"></i> Add Zone</button>
+        </div>
+        <div class="card" style="padding: 0; overflow-x: auto;">
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Fee</th><th>ETA</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="adminShippingTable"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AWAMU 4: REPORTS TAB -->
+      <div class="admin-tab" id="admin-reports">
+        <div class="admin-header">
+          <h3>Sales Reports</h3>
+          <input type="month" id="reportMonth" style="padding:0.5rem; border-radius:8px; border:1.5px solid #e5e5e3;" onchange="loadAdminReports()">
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div><div><div class="stat-num" id="rpRevenue">—</div><div class="stat-label">Mapato (TZS)</div></div></div>
+          <div class="stat"><div class="stat-icon blue"><i class="fas fa-shopping-bag"></i></div><div><div class="stat-num" id="rpOrders">—</div><div class="stat-label">Oda</div></div></div>
+          <div class="stat"><div class="stat-icon amber"><i class="fas fa-chart-line"></i></div><div><div class="stat-num" id="rpAvg">—</div><div class="stat-label">Wastani wa Oda</div></div></div>
+        </div>
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-head"><h3>🏆 Bidhaa Zinazouza Zaidi</h3></div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>#</th><th>Bidhaa</th><th>Idadi</th><th>Mapato (TZS)</th></tr></thead>
+              <tbody id="tTopSellingProducts"><tr><td colspan="4" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>🌟 Wateja Wanaonunua Zaidi</h3></div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>#</th><th>Mteja</th><th>Email</th><th>Oda</th><th>Jumla (TZS)</th></tr></thead>
+              <tbody id="tTopCustomers"><tr><td colspan="5" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AWAMU 4: CUSTOMERS TAB -->
+      <div class="admin-tab" id="admin-customers">
+        <div class="admin-header"><h3>All Customers</h3></div>
+        <div class="card" style="padding: 0; overflow-x: auto;">
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>Customer</th><th>Email</th><th>Role</th><th>Orders</th><th>Total Spent</th></tr></thead>
+            <tbody id="adminCustomersTable"><tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -571,30 +614,40 @@
     <div class="modal">
       <h2 id="adminProductTitle">Add Product</h2>
       <p class="sub">Enter product details</p>
-
       <input type="hidden" id="ap_id">
       <div class="form-group"><label>Product Name *</label><input type="text" id="ap_name"></div>
       <div class="form-group"><label>Description</label><textarea id="ap_desc"></textarea></div>
       <div class="form-group"><label>Price (TZS) *</label><input type="number" id="ap_price" min="0"></div>
-      
       <div class="form-group">
-        <label>Image</label>
+        <label>Main Image</label>
         <input type="text" id="ap_image" placeholder="https://... or upload below">
         <div style="margin-top:0.5rem;">
           <input type="file" id="ap_image_file" accept="image/*" style="font-size:0.85rem;">
-          <small style="color:#a3a3a3; font-size:0.75rem; display:block; margin-top:0.3rem;">Upload picha (max 5MB) au weka URL juu</small>
+          <small style="color:#a3a3a3; font-size:0.75rem; display:block; margin-top:0.3rem;">Picha kuu (max 5MB) au weka URL juu</small>
         </div>
       </div>
-      
-      <div class="form-group"><label>Category</label><select id="ap_category"></select></div>
-      <div class="form-group"><label>Stock</label><input type="number" id="ap_stock" min="0" value="0"></div>
-      <div class="form-group"><label>Rating (0-5)</label><input type="number" id="ap_rating" min="0" max="5" step="0.1" value="4.5"></div>
       <div class="form-group">
-        <label style="display:flex; align-items:center; gap:0.5rem;">
-          <input type="checkbox" id="ap_featured" style="width:auto;"> Featured Product
-        </label>
+        <label>Additional Images (Picha za Ziada)</label>
+        <div style="margin-bottom:0.5rem;">
+          <input type="file" id="ap_multi_images" accept="image/*" multiple style="font-size:0.85rem;" onchange="handleImageFiles(this.files)">
+          <small style="color:#a3a3a3; font-size:0.75rem; display:block; margin-top:0.3rem;">Unaweza kuchagua picha nyingi kwa pamoja (max 5MB kila moja)</small>
+        </div>
+        <div class="image-upload-grid" id="imagePreviewGrid">
+          <p style="color:#a3a3a3; font-size:0.8rem; grid-column:1/-1;">Hakuna picha za ziada bado</p>
+        </div>
       </div>
-
+      <div class="form-group"><label>Category</label><select id="ap_category"></select></div>
+      <div class="form-group" style="background: var(--gray-100); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Variants (Size & Color)</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="addVariantRow()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"><i class="fas fa-plus"></i> Add Variant</button>
+        </label>
+        <p style="font-size:0.75rem; color:#a3a3a3; margin-bottom:0.5rem;">Kama una size/color tofauti, ongeza hapa. Ukiacha wazi, bidhaa itakuwa na stock moja tu chini.</p>
+        <div id="variantsContainer"></div>
+      </div>
+      <div class="form-group"><label>Total Stock (Kama huna variants)</label><input type="number" id="ap_stock" min="0" value="0"></div>
+      <div class="form-group"><label>Rating (0-5)</label><input type="number" id="ap_rating" min="0" max="5" step="0.1" value="4.5"></div>
+      <div class="form-group"><label style="display:flex; align-items:center; gap:0.5rem;"><input type="checkbox" id="ap_featured" style="width:auto;"> Featured Product</label></div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeM('adminProductModal')">Cancel</button>
         <button class="btn-confirm" id="saveAdminProductBtn" onclick="saveAdminProduct()">Save Product</button>
@@ -618,23 +671,12 @@
     <div class="modal">
       <h2>Complete Your Order</h2>
       <p class="sub">Enter your details to place the order</p>
-      
-      <div style="background:#dbeafe; color:#1e40af; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; line-height:1.5;">
-        💡 <strong>Kumbuka:</strong> Unaweza kuagiza bila kujisajili. Kama unataka kufuatilia oda zako, <strong>Sign In</strong> kwanza.
-      </div>
-      
+      <div style="background:#dbeafe; color:#1e40af; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; line-height:1.5;">💡 <strong>Kumbuka:</strong> Unaweza kuagiza bila kujisajili. Kama unataka kufuatilia oda zako, <strong>Sign In</strong> kwanza.</div>
       <div class="form-group"><label>Full Name *</label><input type="text" id="c_name"></div>
       <div class="form-group"><label>Email *</label><input type="email" id="c_email"></div>
       <div class="form-group"><label>Phone *</label><input type="tel" id="c_phone"></div>
       <div class="form-group"><label>Shipping Address *</label><textarea id="c_address"></textarea></div>
-      
-      <div class="form-group">
-        <label>Shipping Zone *</label>
-        <select id="c_shipping" onchange="updateShippingZone()">
-          <option value="">— Loading regions... —</option>
-        </select>
-      </div>
-      
+      <div class="form-group"><label>Shipping Zone *</label><select id="c_shipping" onchange="updateShippingZone()"><option value="">— Loading regions... —</option></select></div>
       <div class="coupon-box" id="couponBox">
         <div class="coupon-header">🎟️ Have a coupon code?</div>
         <div class="coupon-input-row" id="couponInputRow">
@@ -643,40 +685,19 @@
         </div>
         <div id="couponSuccess" style="display:none;"></div>
       </div>
-      
       <div class="price-breakdown">
-        <div class="price-row">
-          <span>Subtotal</span>
-          <span id="pbSubtotal">0 TZS</span>
-        </div>
-        <div class="price-row discount" id="pbDiscountRow" style="display:none;">
-          <span id="pbDiscountLabel">Discount</span>
-          <span id="pbDiscount">-0 TZS</span>
-        </div>
-        <div class="price-row shipping" id="pbShippingRow">
-          <span>Shipping</span>
-          <span id="pbShipping">—</span>
-        </div>
-        <div class="price-row total">
-          <span>TOTAL</span>
-          <span id="pbTotal">0 TZS</span>
-        </div>
+        <div class="price-row"><span>Subtotal</span><span id="pbSubtotal">0 TZS</span></div>
+        <div class="price-row discount" id="pbDiscountRow" style="display:none;"><span id="pbDiscountLabel">Discount</span><span id="pbDiscount">-0 TZS</span></div>
+        <div class="price-row shipping" id="pbShippingRow"><span>Shipping</span><span id="pbShipping">—</span></div>
+        <div class="price-row total"><span>TOTAL</span><span id="pbTotal">0 TZS</span></div>
       </div>
-      
       <div class="form-group">
         <label>Payment Method *</label>
         <div style="display:flex; gap:0.75rem; margin-top:0.4rem;">
-          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;">
-            <input type="radio" name="payment" value="cod" checked style="width:auto;">
-            <span style="font-weight:600;">💵 Cash on Delivery</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;">
-            <input type="radio" name="payment" value="mpesa" style="width:auto;">
-            <span style="font-weight:600;">📱 M-Pesa (Soon)</span>
-          </label>
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;"><input type="radio" name="payment" value="cod" checked style="width:auto;"><span style="font-weight:600;">💵 Cash on Delivery</span></label>
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.75rem; border:1.5px solid #e5e5e3; border-radius:8px; flex:1;"><input type="radio" name="payment" value="mpesa" style="width:auto;"><span style="font-weight:600;">📱 M-Pesa (Soon)</span></label>
         </div>
       </div>
-      
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeCheckout()">Cancel</button>
         <button class="btn-confirm" id="placeOrderBtn" onclick="placeOrder()"><i class="fas fa-check"></i> Place Order</button>
@@ -685,11 +706,7 @@
   </div>
 
   <!-- PRODUCT DETAILS MODAL -->
-  <div class="modal-overlay" id="productModal">
-    <div class="modal" style="max-width:900px;">
-      <div id="productDetailContent"></div>
-    </div>
-  </div>
+  <div class="modal-overlay" id="productModal"><div class="modal" style="max-width:900px;"><div id="productDetailContent"></div></div></div>
 
   <!-- USER MENU -->
   <div class="user-menu" id="userMenu">
@@ -709,9 +726,7 @@
         <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
         <button class="auth-tab" id="tabSignUp" onclick="switchAuthTab('signup')">Sign Up</button>
       </div>
-      <div id="signupFields" style="display:none;">
-        <div class="form-group"><label>Full Name *</label><input type="text" id="a_name"></div>
-      </div>
+      <div id="signupFields" style="display:none;"><div class="form-group"><label>Full Name *</label><input type="text" id="a_name"></div></div>
       <div class="form-group"><label>Email *</label><input type="email" id="a_email"></div>
       <div class="form-group"><label>Password *</label><input type="password" id="a_password" placeholder="At least 6 characters"></div>
       <a class="forgot-link" id="forgotLink" onclick="handleForgotPassword()">Forgot password?</a>
@@ -735,32 +750,25 @@
     </div>
   </div>
 
-  <!-- SET NEW PASSWORD MODAL (FORGOT PASSWORD RECOVERY) -->
+  <!-- SET NEW PASSWORD MODAL -->
   <div class="modal-overlay" id="setPasswordModal">
     <div class="modal" style="max-width:450px;">
       <div id="setPasswordContent">
         <h2>Set New Password</h2>
         <p class="sub">Weka password mpya kwa akaunti yako.</p>
-        
         <div class="form-group">
           <label>New Password *</label>
           <input type="password" id="new_password" placeholder="At least 6 characters" oninput="checkPasswordStrength()">
-          <div class="password-strength">
-            <div class="password-strength-fill" id="passwordStrengthBar"></div>
-          </div>
+          <div class="password-strength"><div class="password-strength-fill" id="passwordStrengthBar"></div></div>
           <div class="password-hint" id="passwordHint">Angalau herufi 6</div>
         </div>
-        
         <div class="form-group">
           <label>Confirm Password *</label>
           <input type="password" id="confirm_password" placeholder="Rudia password" oninput="checkPasswordMatch()">
           <div class="password-hint" id="confirmHint"></div>
         </div>
-        
         <div class="modal-actions">
-          <button class="btn-confirm" id="setPasswordBtn" onclick="updatePassword()">
-            <i class="fas fa-save"></i> Save Password
-          </button>
+          <button class="btn-confirm" id="setPasswordBtn" onclick="updatePassword()"><i class="fas fa-save"></i> Save Password</button>
         </div>
       </div>
     </div>
@@ -794,29 +802,59 @@
       <div style="font-size:3rem; margin-bottom:1rem;">🎉</div>
       <h2 style="margin-bottom:0.5rem;">Oda imefanikiwa!</h2>
       <p class="sub" style="margin-bottom:1.5rem;">Unataka kuunda akaunti ili kufuatilia oda zako?</p>
-      
       <div style="text-align:left; background:#f7f7f5; padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
-        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;">
-          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
-          <span style="font-weight:500; font-size:0.9rem;">Ona historia ya oda</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;">
-          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
-          <span style="font-weight:500; font-size:0.9rem;">Fuatilia usafirishaji</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:0.75rem;">
-          <i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i>
-          <span style="font-weight:500; font-size:0.9rem;">Oda za haraka baadaye</span>
-        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;"><i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i><span style="font-weight:500; font-size:0.9rem;">Ona historia ya oda</span></div>
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.6rem;"><i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i><span style="font-weight:500; font-size:0.9rem;">Fuatilia usafirishaji</span></div>
+        <div style="display:flex; align-items:center; gap:0.75rem;"><i class="fas fa-check-circle" style="color:#10b981; font-size:1.1rem;"></i><span style="font-weight:500; font-size:0.9rem;">Oda za haraka baadaye</span></div>
       </div>
-      
       <div style="display:flex; flex-direction:column; gap:0.75rem;">
-        <button class="btn-confirm" onclick="createAccountFromOrder()" style="width:100%; padding:1rem; font-size:1rem;">
-          <i class="fas fa-user-plus"></i> Unda Akaunti
-        </button>
-        <button class="btn-cancel" onclick="closeM('accountSuggestionModal')" style="width:100%; padding:1rem; font-size:1rem;">
-          Hapana, asante
-        </button>
+        <button class="btn-confirm" onclick="createAccountFromOrder()" style="width:100%; padding:1rem; font-size:1rem;"><i class="fas fa-user-plus"></i> Unda Akaunti</button>
+        <button class="btn-cancel" onclick="closeM('accountSuggestionModal')" style="width:100%; padding:1rem; font-size:1rem;">Hapana, asante</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN COUPON MODAL -->
+  <div class="modal-overlay" id="adminCouponModal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-head">
+        <h2 id="adminCouponTitle">Add Coupon</h2>
+        <button class="close-x" onclick="closeM('adminCouponModal')">&times;</button>
+      </div>
+      <form id="fAdminCoupon">
+        <input type="hidden" id="ac_id">
+        <div class="form-group"><label>Code *</label><input type="text" id="ac_code" placeholder="e.g., WELCOME10" style="text-transform:uppercase;"></div>
+        <div class="form-group"><label>Description</label><input type="text" id="ac_desc" placeholder="e.g., 10% off first order"></div>
+        <div class="form-group"><label>Discount Type *</label><select id="ac_type"><option value="percent">Percentage (%)</option><option value="fixed">Fixed Amount (TZS)</option></select></div>
+        <div class="form-group"><label>Discount Value *</label><input type="number" id="ac_value" min="0" step="0.01" placeholder="10"></div>
+        <div class="form-group"><label>Min Order (TZS)</label><input type="number" id="ac_min_order" min="0" value="0"></div>
+        <div class="form-group"><label>Max Uses (acha wazi kwa unlimited)</label><input type="number" id="ac_max_uses" min="1" placeholder="e.g., 100"></div>
+        <div class="form-group"><label style="display:flex; align-items:center; gap:0.5rem;"><input type="checkbox" id="ac_active" checked style="width:auto;"> Active</label></div>
+      </form>
+      <div class="modal-foot">
+        <button class="btn btn-outline" onclick="closeM('adminCouponModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAdminCoupon()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SHIPPING MODAL -->
+  <div class="modal-overlay" id="adminShippingModal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-head">
+        <h2 id="adminShippingTitle">Add Shipping Zone</h2>
+        <button class="close-x" onclick="closeM('adminShippingModal')">&times;</button>
+      </div>
+      <form id="fAdminShipping">
+        <input type="hidden" id="as_id">
+        <div class="form-group"><label>Zone Name *</label><input type="text" id="as_name" placeholder="e.g., Dar es Salaam"></div>
+        <div class="form-group"><label>Fee (TZS) *</label><input type="number" id="as_fee" min="0" value="0"></div>
+        <div class="form-group"><label>ETA (Estimated Delivery Time)</label><input type="text" id="as_eta" placeholder="e.g., 1-2 days"></div>
+        <div class="form-group"><label style="display:flex; align-items:center; gap:0.5rem;"><input type="checkbox" id="as_active" checked style="width:auto;"> Active</label></div>
+      </form>
+      <div class="modal-foot">
+        <button class="btn btn-outline" onclick="closeM('adminShippingModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAdminShipping()"><i class="fas fa-save"></i> Save</button>
       </div>
     </div>
   </div>
