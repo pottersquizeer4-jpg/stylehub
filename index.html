@@ -449,7 +449,9 @@
       border-color: var(--primary);
     }
 
-    /* RESPONSIVE */
+    /* ============================================
+       AWAMU 10: MOBILE RESPONSIVENESS
+       ============================================ */
     @media (max-width: 768px) {
       .header-inner { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
       .search-bar { order: 3; flex-basis: 100%; max-width: none; }
@@ -461,14 +463,63 @@
       .product-detail { grid-template-columns: 1fr; gap: 1.5rem; }
       .order-timeline::before { left: 15%; right: 15%; }
       .timeline-label { font-size: 0.6rem; }
-    }
-    @media (max-width: 600px) {
+      
+      /* Mobile Filter Bar */
+      .adv-filter-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .adv-filter-bar label { margin-left: 0 !important; margin-top: 0.5rem; }
+      .adv-filter-bar input, .adv-filter-bar select { width: 100%; }
+      .clear-btn { width: 100%; justify-content: center; }
+      
+      /* Mobile Modals */
+      .modal { padding: 1.5rem; border-radius: 16px; }
+      .modal-actions { flex-direction: column-reverse; }
+      .modal-actions button { width: 100%; }
+      
+      /* Mobile Admin Tables */
+      .admin-table th, .admin-table td { padding: 0.5rem; font-size: 0.75rem; }
+      .admin-nav { gap: 0.25rem; }
+      .admin-nav button { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+      
+      /* Mobile Cart Sidebar */
+      .cart-sidebar { max-width: 100%; }
+      
+      /* Mobile User Menu */
+      .user-menu { right: 1rem; left: 1rem; min-width: auto; }
+      
+      /* Mobile Stats */
       .stats { grid-template-columns: 1fr; }
       .stat { padding: 1rem; }
       .stat-num { font-size: 1.25rem; }
       .stat-icon { width: 42px; height: 42px; font-size: 1.1rem; }
-      .modal-foot { flex-direction: column-reverse; }
-      .modal-foot .btn { width: 100%; }
+      
+      /* Mobile Products Detail */
+      .product-detail-img { aspect-ratio: 4/3; }
+    }
+
+    @media (max-width: 480px) {
+      .hero-content h1 { font-size: 1.8rem; }
+      .hero-content p { font-size: 0.9rem; }
+      .hero-btn { padding: 0.8rem 1.5rem; font-size: 0.9rem; }
+      
+      /* Header Buttons Mobile */
+      .user-btn span { display: none; } /* Ficha jina, onyesha icon tu */
+      .user-btn { padding: 0.6rem; width: 44px; height: 44px; justify-content: center; }
+      
+      /* Product Cards Mobile */
+      .product-card { border-radius: 12px; }
+      .product-info { padding: 0.8rem; }
+      .product-name { font-size: 0.9rem; }
+      .product-price { font-size: 1rem; }
+      .add-btn { width: 36px; height: 36px; }
+      
+      /* Admin Table Mobile */
+      .admin-table { font-size: 0.7rem; }
+      .admin-header h3 { font-size: 1rem; }
+      .btn-primary { padding: 0.5rem 0.8rem; font-size: 0.75rem; }
+      
+      /* Modals Full Screen on small phones */
+      .modal-overlay { padding: 0.5rem; }
+      .modal { padding: 1rem; max-height: 95vh; }
     }
   </style>
 </head>
