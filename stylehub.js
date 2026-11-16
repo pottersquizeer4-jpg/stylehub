@@ -614,6 +614,9 @@ function openProduct(id) {
   document.getElementById('productModal').classList.add('show');
   loadReviews(p.id);
   loadProductGallery(p.id, p.image_url);
+  
+  // ✅ AWAMU 11: Pakia Recommendations
+  loadRecommendations(p);
 }
 
 function selectSize(size, btn) {
@@ -726,6 +729,65 @@ function addFromDetail() {
 function closeProduct() {
   document.getElementById('productModal').classList.remove('show');
   currentProduct = null;
+}
+
+// ============================================
+// AWAMU 11: PRODUCT RECOMMENDATIONS
+// ============================================
+function loadRecommendations(currentProd) {
+  const container = document.getElementById('recommendationsSection');
+  if (!container) return;
+  
+  // 1. Tafuta bidhaa zinazofanana (Category moja, isiyo ni hii ya sasa)
+  let related = allProducts.filter(p => 
+    p.id !== currentProd.id && 
+    p.category_id === currentProd.category_id
+  );
+  
+  // 2. Kama hazitoshi (chini ya 4), ongeza nyingine yoyote
+  if (related.length < 4) {
+    const others = allProducts.filter(p => 
+      p.id !== currentProd.id && 
+      !related.includes(p)
+    );
+    related = [...related, ...others];
+  }
+  
+  // 3. Panga kwa Rating (juu hadi chini) na chukua 4 tu
+  related = related.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 4);
+  
+  if (related.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  // 4. Onyesha Recommendations
+  container.innerHTML = `
+    <h4 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i class="fas fa-thumbs-up" style="color: var(--primary);"></i> You May Also Like
+    </h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+      ${related.map(p => `
+        <div onclick="closeProduct(); setTimeout(() => openProduct(${p.id}), 300);" 
+             style="background: white; border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s;"
+             onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)';"
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <img src="${esc(p.image_url || 'https://via.placeholder.com/200')}" 
+               style="width: 100%; aspect-ratio: 1; object-fit: cover;"
+               onerror="this.src='https://via.placeholder.com/200'">
+          <div style="padding: 0.75rem;">
+            <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${esc(p.name)}
+            </div>
+            <div style="color: var(--primary); font-weight: 800; font-size: 0.95rem;">${fmtPrice(p.price)}</div>
+            <div style="color: var(--primary); font-size: 0.75rem; margin-top: 0.25rem;">
+              ${'★'.repeat(Math.floor(p.rating || 0))}${'☆'.repeat(5 - Math.floor(p.rating || 0))}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 // ============================================
