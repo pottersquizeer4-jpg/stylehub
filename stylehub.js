@@ -1000,6 +1000,14 @@ function renderCart() {
   const footer = document.getElementById('cartFooter');
   const count = document.getElementById('cartCount');
 
+  // ✅ ANIMATION: Cart Bump
+  const cartBtn = document.querySelector('.cart-btn');
+  if (cartBtn) {
+    cartBtn.classList.remove('bump');
+    void cartBtn.offsetWidth; // Trigger reflow to restart animation
+    cartBtn.classList.add('bump');
+  }
+
   const totalQty = cart.reduce((s, x) => s + x.qty, 0);
   count.textContent = totalQty;
 
@@ -2777,12 +2785,13 @@ async function saveAdminShipping() {
   
   const id = document.getElementById('as_id').value;
   const name = document.getElementById('as_name').value.trim();
+  const fee = parseFloat(document.getElementById('as_fee').value) || 0;
   
-  if (!name) { toast('Jaza jina la zone', 'error'); return; }
+  if (!name) { toast('Jaza jina la eneo', 'error'); return; }
   
   const payload = {
     name: name,
-    fee: parseFloat(document.getElementById('as_fee').value) || 0,
+    fee: fee,
     eta_days: document.getElementById('as_eta').value.trim() || null,
     is_active: document.getElementById('as_active').checked
   };
@@ -2801,7 +2810,6 @@ async function saveAdminShipping() {
     toast(id ? 'Shipping zone updated' : 'Shipping zone added', 'success');
     closeM('adminShippingModal');
     loadAdminShipping();
-    loadShippingZones();
   } catch (err) {
     toast(err.message, 'error');
   }
@@ -2815,179 +2823,162 @@ async function deleteAdminShipping(id) {
   if (error) return toast(error.message, 'error');
   toast('Shipping zone deleted', 'success');
   loadAdminShipping();
-  loadShippingZones();
 }
 
 // ============================================
-// AWAMU 4: SALES REPORTS
+// AWAMU 4: ADMIN REPORTS & CUSTOMERS
 // ============================================
-function getReportMonth() {
-  const input = document.getElementById('reportMonth');
-  if (input && input.value) return input.value;
-  const now = new Date();
-  return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-}
 
+// --------------------------------------------------
+// REPORTS (Monthly)
+// --------------------------------------------------
 async function loadAdminReports() {
   if (!requireAdmin()) return;
-
-  const ym = getReportMonth();
-  const [year, month] = ym.split('-').map(Number);
-  const start = new Date(year, month - 1, 1).toISOString();
-  const end = new Date(year, month, 1).toISOString();
-
-  const input = document.getElementById('reportMonth');
-  if (input && !input.value) input.value = ym;
-
-  const elRevenue = document.getElementById('rpRevenue');
-  if (elRevenue) elRevenue.textContent = '—';
+  
+  const monthInput = document.getElementById('reportMonth');
+  if (!monthInput.value) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    monthInput.value = `${y}-${m}`;
+  }
+  
+  const monthStr = monthInput.value;
+  const start = new Date(monthStr + '-01T00:00:00');
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + 1);
   
   try {
-    const { data: monthOrders } = await db.from('orders')
+    const { data: orders, error } = await db
+      .from('orders')
       .select('*')
-      .gte('created_at', start)
-      .lt('created_at', end);
-
-    const totalOrders = monthOrders ? monthOrders.length : 0;
-    const totalRevenue = monthOrders ? monthOrders.reduce((s, o) => s + (parseFloat(o.total_amount) || 0), 0) : 0;
-    const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    document.getElementById('rpRevenue').textContent = totalRevenue.toLocaleString();
-    document.getElementById('rpOrders').textContent = totalOrders;
-    document.getElementById('rpAvg').textContent = Math.round(avgOrder).toLocaleString();
-
-    const orderIds = monthOrders ? monthOrders.map(o => o.id) : [];
-    let orderItems = [];
-    if (orderIds.length > 0) {
-      const { data: oi } = await db.from('order_items').select('*').in('order_id', orderIds);
-      orderItems = oi || [];
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+      
+    if (error) throw error;
+    
+    const revenue = (orders || [])
+      .filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered')
+      .reduce((s, o) => s + (o.total_amount || 0), 0);
+      
+    const paidOrders = (orders || []).filter(o => ['paid', 'shipped', 'delivered'].includes(o.status));
+    const avg = paidOrders.length > 0 ? revenue / paidOrders.length : 0;
+    
+    document.getElementById('rpRevenue').textContent = fmtPrice(revenue);
+    document.getElementById('rpOrders').textContent = paidOrders.length;
+    document.getElementById('rpAvg').textContent = fmtPrice(avg);
+    
+    // Top Selling Products
+    if (paidOrders.length > 0) {
+      const orderIds = paidOrders.map(o => o.id);
+      const { data: items } = await db.from('order_items').select('*').in('order_id', orderIds);
+      
+      const prodMap = {};
+      (items || []).forEach(i => {
+        if (!prodMap[i.product_name]) prodMap[i.product_name] = { qty: 0, revenue: 0 };
+        prodMap[i.product_name].qty += i.quantity;
+        prodMap[i.product_name].revenue += i.quantity * i.price;
+      });
+      
+      const top = Object.entries(prodMap).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10);
+      const tbody = document.getElementById('tTopSellingProducts');
+      
+      tbody.innerHTML = top.length === 0 
+        ? '<tr><td colspan="4" style="text-align:center;padding:2rem;color:#a3a3a3;">No sales</td></tr>'
+        : top.map(([name, d], i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${esc(name)}</td>
+              <td>${d.qty}</td>
+              <td>${fmtPrice(d.revenue)}</td>
+            </tr>
+          `).join('');
+    } else {
+      document.getElementById('tTopSellingProducts').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:#a3a3a3;">No sales</td></tr>';
     }
     
-    const productMap = {};
-    orderItems.forEach(item => {
-      if (!productMap[item.product_name]) productMap[item.product_name] = { qty: 0, revenue: 0 };
-      productMap[item.product_name].qty += item.quantity;
-      productMap[item.product_name].revenue += item.quantity * parseFloat(item.price);
+    // Top Customers
+    const custMap = {};
+    paidOrders.forEach(o => {
+      if (!custMap[o.customer_email]) custMap[o.customer_email] = { name: o.customer_name, orders: 0, total: 0 };
+      custMap[o.customer_email].orders++;
+      custMap[o.customer_email].total += o.total_amount || 0;
     });
-
-    const topProducts = Object.entries(productMap)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-
-    const tbodyProd = document.getElementById('tTopSellingProducts');
-    if (topProducts.length === 0) {
-      tbodyProd.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:#a3a3a3;">Hakuna mauzo mwezi huu</td></tr>';
-    } else {
-      tbodyProd.innerHTML = topProducts.map((p, i) => `
-        <tr>
-          <td><strong>${i + 1}</strong></td>
-          <td>${esc(p.name)}</td>
-          <td>${p.qty}</td>
-          <td><strong style="color:var(--success);">${p.revenue.toLocaleString()} TZS</strong></td>
-        </tr>
-      `).join('');
-    }
-
-    const customerMap = {};
-    (monthOrders || []).forEach(o => {
-      const email = o.customer_email || 'guest';
-      if (!customerMap[email]) {
-        customerMap[email] = { name: o.customer_name, orders: 0, total: 0 };
-      }
-      customerMap[email].orders++;
-      customerMap[email].total += parseFloat(o.total_amount) || 0;
-    });
-
-    const topCustomers = Object.entries(customerMap)
-      .map(([email, data]) => ({ email, ...data }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-
-    const tbodyCust = document.getElementById('tTopCustomers');
-    if (topCustomers.length === 0) {
-      tbodyCust.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#a3a3a3;">Hakuna wateja mwezi huu</td></tr>';
-    } else {
-      tbodyCust.innerHTML = topCustomers.map((c, i) => `
-        <tr>
-          <td><strong>${i + 1}</strong></td>
-          <td>${esc(c.name)}</td>
-          <td>${esc(c.email)}</td>
-          <td>${c.orders}</td>
-          <td><strong style="color:var(--primary);">${c.total.toLocaleString()} TZS</strong></td>
-        </tr>
-      `).join('');
-    }
-
+    
+    const topCust = Object.entries(custMap).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+    const custTbody = document.getElementById('tTopCustomers');
+    
+    custTbody.innerHTML = topCust.length === 0
+      ? '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#a3a3a3;">No customers</td></tr>'
+      : topCust.map(([email, d], i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${esc(d.name)}</td>
+            <td>${esc(email)}</td>
+            <td>${d.orders}</td>
+            <td>${fmtPrice(d.total)}</td>
+          </tr>
+        `).join('');
+        
   } catch (err) {
-    console.error('Reports error:', err);
-    toast('Error loading reports: ' + err.message, 'error');
+    console.error('Load reports error:', err);
+    toast(err.message, 'error');
   }
 }
 
-// ============================================
-// AWAMU 4: CUSTOMER MANAGEMENT
-// ============================================
+// --------------------------------------------------
+// CUSTOMERS
+// --------------------------------------------------
 async function loadAdminCustomers() {
   if (!requireAdmin()) return;
-
+  
   const tbody = document.getElementById('adminCustomersTable');
-  if (!tbody) return;
-
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
-
   try {
-    const { data: users } = await db.from('user_profiles').select('*');
-    const { data: orders } = await db.from('orders').select('*');
-
-    if (!users || users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">No customers</td></tr>';
+    const { data: profiles, error } = await db
+      .from('user_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    // Chukua orders za kila mteja
+    const { data: orders } = await db.from('orders').select('user_id, customer_email, total_amount, status');
+    
+    const orderStats = {};
+    (orders || []).forEach(o => {
+      const key = o.user_id || o.customer_email;
+      if (!key) return;
+      if (!orderStats[key]) orderStats[key] = { count: 0, spent: 0 };
+      orderStats[key].count++;
+      if (['paid', 'shipped', 'delivered'].includes(o.status)) {
+        orderStats[key].spent += o.total_amount || 0;
+      }
+    });
+    
+    if (!profiles || profiles.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#a3a3a3;">No customers yet</td></tr>';
       return;
     }
-
-    const customerList = users.map(u => {
-      const userOrders = (orders || []).filter(o => 
-        (o.user_id && o.user_id === u.id) || 
-        (o.customer_email && o.customer_email === u.email)
-      );
-      
-      const totalSpent = userOrders.reduce((s, o) => s + (parseFloat(o.total_amount) || 0), 0);
-      const orderCount = userOrders.length;
-      
-      let email = u.email;
-      if (!email && userOrders.length > 0) {
-        email = userOrders[0].customer_email;
-      }
-      
-      return {
-        id: u.id,
-        full_name: u.full_name || 'Unknown',
-        email: email || '—',
-        role: u.role || 'user',
-        orderCount,
-        totalSpent
-      };
-    }).sort((a, b) => b.totalSpent - a.totalSpent);
-
-    tbody.innerHTML = customerList.map((c, i) => `
-      <tr>
-        <td><strong>${i + 1}</strong></td>
-        <td>
-          <div class="user-cell">
-            <div class="avatar">${initials(c.full_name)}</div>
-            <div>
-              <div class="name">${esc(c.full_name)}</div>
-              <div class="email">${esc(c.email)}</div>
+    
+    tbody.innerHTML = profiles.map((u, i) => {
+      const stats = orderStats[u.id] || { count: 0, spent: 0 };
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <div class="avatar">${initials(u.full_name || u.email || '?')}</div>
+              <strong>${esc(u.full_name || 'Guest')}</strong>
             </div>
-          </div>
-        </td>
-        <td>${esc(c.email)}</td>
-        <td><span class="status-badge ${c.role === 'admin' ? 'status-active' : 'status-pending'}">${esc(c.role)}</span></td>
-        <td>${c.orderCount}</td>
-        <td><strong style="color:var(--success);">${c.totalSpent.toLocaleString()} TZS</strong></td>
-      </tr>
-    `).join('');
-
+          </td>
+          <td>${esc(u.email || '—')}</td>
+          <td><span class="status-badge ${u.role === 'admin' ? 'status-active' : 'status-inactive'}">${u.role || 'customer'}</span></td>
+          <td>${stats.count}</td>
+          <td>${fmtPrice(stats.spent)}</td>
+        </tr>
+      `;
+    }).join('');
+    
   } catch (err) {
     console.error('Load customers error:', err);
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Error: ' + esc(err.message) + '</td></tr>';
@@ -2995,79 +2986,79 @@ async function loadAdminCustomers() {
 }
 
 // ============================================
-// AWAMU 8: EXPORT REPORTS TO CSV
+// AWAMU 8: EXPORT CSV
 // ============================================
-async function exportReportToCSV() {
+function exportReportToCSV() {
   if (!requireAdmin()) return;
-
-  const btn = event.target.closest('button');
-  const originalText = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-
-  try {
-    const ym = getReportMonth();
-    const [year, month] = ym.split('-').map(Number);
-    const start = new Date(year, month - 1, 1).toISOString();
-    const end = new Date(year, month, 1).toISOString();
-
-    // 1. Pata Data kutoka Supabase
-    const { data: monthOrders } = await db.from('orders')
-      .select('*')
-      .gte('created_at', start)
-      .lt('created_at', end);
-
-    const orderIds = monthOrders ? monthOrders.map(o => o.id) : [];
-    let orderItems = [];
-    if (orderIds.length > 0) {
-      const { data: oi } = await db.from('order_items').select('*').in('order_id', orderIds);
-      orderItems = oi || [];
+  
+  const monthInput = document.getElementById('reportMonth');
+  const month = monthInput.value || 'report';
+  
+  const revenue = document.getElementById('rpRevenue').textContent;
+  const orders = document.getElementById('rpOrders').textContent;
+  const avg = document.getElementById('rpAvg').textContent;
+  
+  const topProducts = [];
+  document.querySelectorAll('#tTopSellingProducts tr').forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length >= 4 && cells[0].textContent !== '#') {
+      topProducts.push([
+        cells[0].textContent,
+        cells[1].textContent,
+        cells[2].textContent,
+        cells[3].textContent
+      ]);
     }
-
-    // 2. Tengeneza Mistari ya CSV (Headers)
-    let csvContent = "Order ID,Customer Name,Customer Email,Phone,Date,Total (TZS),Status,Product,Qty,Price (TZS)\n";
-
-    // 3. Jaza Data
-    (monthOrders || []).forEach(order => {
-      const itemsForOrder = orderItems.filter(i => i.order_id === order.id);
-      
-      if (itemsForOrder.length === 0) {
-        // Kama oda haina items (labda imefutwa)
-        csvContent += `"${order.id}","${order.customer_name}","${order.customer_email}","${order.customer_phone}","${new Date(order.created_at).toLocaleDateString('en-GB')}","${order.total_amount}","${order.status}","-","-","-"\n`;
-      } else {
-        // Kama ina items, rudia oda kwa kila item
-        itemsForOrder.forEach(item => {
-          csvContent += `"${order.id}","${order.customer_name}","${order.customer_email}","${order.customer_phone}","${new Date(order.created_at).toLocaleDateString('en-GB')}","${order.total_amount}","${order.status}","${item.product_name}","${item.quantity}","${item.price}"\n`;
-        });
-      }
-    });
-
-    // 4. Pakua Faili
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `StyleHub_Report_${ym}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast('✅ Ripoti imepakuliwa!', 'success');
-
-  } catch (err) {
-    console.error('Export error:', err);
-    toast('Error: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-  }
+  });
+  
+  const topCustomers = [];
+  document.querySelectorAll('#tTopCustomers tr').forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length >= 5 && cells[0].textContent !== '#') {
+      topCustomers.push([
+        cells[0].textContent,
+        cells[1].textContent,
+        cells[2].textContent,
+        cells[3].textContent,
+        cells[4].textContent
+      ]);
+    }
+  });
+  
+  const lines = [];
+  lines.push(`Ripoti ya Mauzo - ${month}`);
+  lines.push('');
+  lines.push(`Mapato,${revenue}`);
+  lines.push(`Oda,${orders}`);
+  lines.push(`Wastani,${avg}`);
+  lines.push('');
+  lines.push('BIDHAA ZINAZOUZA ZAIDI');
+  lines.push('#,Bidhaa,Idadi,Mapato');
+  topProducts.forEach(row => lines.push(row.join(',')));
+  lines.push('');
+  lines.push('WATEJA WANAONUNUA ZAIDI');
+  lines.push('#,Mteja,Email,Oda,Jumla');
+  topCustomers.forEach(row => lines.push(row.join(',')));
+  
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stylehub-report-${month}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  toast('CSV imepakuliwa!', 'success');
 }
 
 // ============================================
 // INIT
 // ============================================
-initAuth();
-loadData();
-loadDarkMode();
-loadShippingZones();
-initHeroSlider();
+document.addEventListener('DOMContentLoaded', () => {
+  initHeroSlider();
+  loadDarkMode();
+  initAuth();
+  loadData();
+  console.log('✅ StyleHub loaded successfully');
+});
